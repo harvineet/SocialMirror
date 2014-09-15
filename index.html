@@ -1,0 +1,303 @@
+<html>
+<body>
+
+<h3>Hashtag Segmentation using Unigram and Bigram model</h3>
+<pre>
+bundyranch	bundy,ranch
+nashto2mil	nash,to,2,mil
+votetris	vote,tris
+epnvsinternet	epn,vs,internet
+scandalfinale	scandal,finale
+mynypd	my,nypd
+donaldsterling	donald,sterling
+cancelcolbert	cancel,colbert
+voicesave	voice,save
+clivenbundy	clive,n,bundy
+rhoareunion	rhoa,reunion
+voteloki	vote,loki
+bloodmoon	bloodmoon
+kochbuysgop	koch,buys,gop
+iamnotaliberalbecause	i,am,not,a,liberal,because
+blm	blm
+dialogomaduroporlapaz	dialogo,maduro,por,la,paz
+mariamiller	maria,miller
+gabrielgarciamarquez	gabriel,garcia,marquez
+contraelsilenciomx	contra,el,silencio,mx
+howoldareyou	how,old,are,you
+poppedwheatthins	popped,wheat,thins
+7millionandcounting	7,million,and,counting
+bahraingp	bahrain,gp
+bjpmanifesto	bjp,manifesto
+happybirthdayshakespeare	happy,birthday,shakespeare
+
+votekatniss	vote,kat,niss
+mgwv	mg,wv
+maduromasacraaltachira	maduro,ma,sacra,alta,chira
+spinnrtaylorswift	spin,nr,taylor,swift
+aappositive	a,appositive
+heartbleed	heart,bleed
+sfbatkid	sfb,at,kid
+indvsban	in,dvs,ban
+</pre>
+<a href="tag_segments.txt">Segmentation for hashtags with atleast 1000 tweets</a>
+<br>Reference http://norvig.com/ngrams/, Using code and data by Peter Norvig
+
+<h4> 15 Sep </h4>
+
+<h3>Effect of adding feature categories at different prediction thresholds</h3>
+<img src="plots/featureEffect_1.png" width="1000" height="600" />
+
+<h3>Results on different geographies (Table 8)</h3>
+<pre>
+	India 	
+Set		AUC		AUC_prev	Prec		Prec_prev	Rec		Rec_prev	FM		FM_prev
+E1		0.169		0.070		0.1759		0.113		0.5368		0.315		0.2649		0.165
+E		0.233		0.327		0.2857		0.388		0.3824		0.308		0.327		0.344
+E+N		0.274		0.319		0.2837		0.432		0.4338		0.257		0.343		0.322
+E+C		0.274		0.327		0.3868		0.4		0.3015		0.324		0.3388		0.358
+E+N+C		0.336		0.361		0.3134		0.49		0.4632		0.36		0.3739		0.415
+
+	London 	
+Set		AUC		AUC_prev	Prec		Prec_prev	Rec 		Rec_prev	FM		FM_prev
+E1		0.087		0.091		0.0974		0.093		0.2909		0.364		0.1459		0.148
+E		0.123		0.113		0.1422		0.141		0.1939		0.193		0.1641		0.163
+E+N		0.121		0.115		0.0896		0.105		0.303		0.188		0.1383		0.135
+E+C		0.179		0.189		0.1946		0.166		0.2182		0.321		0.2057		0.219
+E+N+C		0.182		0.18		0.2297		0.17		0.2061		0.333		0.2173		0.225
+
+	Quito 	
+Set		AUC		AUC_prev	Prec		Prec_prev	Rec		Rec_prev	FM		FM_prev
+E1		0.069		0.148		0.0764		0.187		0.4575		0.163		0.1309		0.174
+E		0.082		0.168		0.0909	 	0.283		0.3529		0.15		0.1446		0.197
+E+N		0.172		0.22		0.1818		0.338		0.2745		0.17		0.2188		0.226
+E+C		0.1		0.172		0.1063		0.289		0.3987		0.157		0.1678		0.203
+E+N+C		0.187		0.241		0.2135		0.449		0.268		0.203		0.2377		0.279
+</pre>
+
+<h3>Effect of size of training data</h3>
+Computed by taking subsample (without replacement) of the training set in each fold of cross-validation
+<pre>
+Size	AUPRC
+50.00%	0.258
+60.00%	0.257
+70.00%	0.258
+80.00%	0.248
+90.00%	0.26
+100.00%	0.275
+</pre>
+
+<h3>Probability density plots (Figure 2)</h3>
+<img src="plots/feature_distribution_plot/Average rate of change of conductance (last 50).png" width="800" height="400" />
+<img src="plots/feature_distribution_plot/Growth Rate.png" width="800" height="400" />
+<img src="plots/feature_distribution_plot/Number of Adopters with Heavy Following.png" width="800" height="400" />
+<img src="plots/feature_distribution_plot/Number of Infected Geographies.png" width="800" height="400" />
+
+<h3>Cumulative distribution of observation time of topics (Figure 1)</h3>
+<img src="plots/cumulativePlotObsTime_modified.png" width="800" height="400" />
+<br>
+Median time: 
+TwitDat 12.38 days,
+WengDat 13.03 days
+
+<h3>Urgency of prediction (Figure 3 and values)</h3>
+<img src="plots/urgencyPrediction.png" width="800" height="400" />
+<pre>
+Threshold	AUC
+250		0.1031
+500		0.1234
+1000		0.1816
+1500		0.2747
+2000		0.3090
+2500		0.3324
+3000		0.4169
+</pre>
+<h4> 08 Sep </h4>
+
+<h3> Results for different feature combinations</h3>
+<pre>
+Feature		AUC		AUC_prev	Prec		Prec_prev	Rec		Rec_prev	FM		FM_prev
+Random		0.063		0.035		0.063		0.035		0.50		0.50		0.1119		.0654
+E1		0.110		0.176		0.1042		0.1316		0.4181		0.2655		0.1669		0.176
+E		0.181		0.215		0.2103		0.1729		0.2994		0.2316		0.2471		0.198
+E+N		0.192		0.233		0.2839		0.239 		0.2599		0.2768		0.2714		0.2565
+E+G		0.215		0.214		0.2477		0.2114		0.3107		0.209 		0.2757		0.2102
+E+C		0.258		0.269		0.2993		0.2806		0.4802		0.3107		0.3688		0.2949
+E+N+G		0.186		0.221		0.2099		0.221 		0.3333		0.2372		0.2576		0.2288
+E+G+C		0.266		0.26 		0.3609		0.2783		0.3446		0.3333		0.3526		0.3033
+E+N+C		0.269		0.274		0.3598		0.2837		0.3333		0.3446		0.346		0.3112
+E+N+G+C		0.275		0.261		0.3171		0.2809		0.3672		0.3333		0.3403		0.3049
+</pre>
+<h4> 06 Sep </h4>
+<h3> Moving window Conductance plots for particular hashtags</h3>
+<h3> Window size 25, Disjoint windows</h3>
+<img src="plots/moving_conductance/tweet_wise/disjoint_25kselfie_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/disjoint_100thingstodobeforeidie_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/disjoint_7millionandcounting_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/disjoint_cancelcolbert_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/disjoint_heartbleed_t.png" width="800" height="400" />
+<h3> Window size 100, Shift by 1</h3>
+<img src="plots/moving_conductance/tweet_wise/smallwindow_25kselfie_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/smallwindow_100thingstodobeforeidie_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/smallwindow_7millionandcounting_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/smallwindow_cancelcolbert_t.png" width="800" height="400" />
+<img src="plots/moving_conductance/tweet_wise/smallwindow_heartbleed_t.png" width="800" height="400" />
+<h3> Comparison with number of adopters (disjoint window)</h3>
+<img src="plots/moving_conductance/time_wise/disjoint_100thingstodobeforeidie.png" width="800" height="400" />
+<img src="plots/moving_conductance/time_wise/disjoint_25kselfie.png" width="800" height="400" />
+<img src="plots/moving_conductance/time_wise/disjoint_cancelcolbert.png" width="800" height="400" />
+<img src="plots/moving_conductance/time_wise/disjoint_heartbleed.png" width="800" height="400" />
+<h4> 26 Aug </h4>
+
+<h3> Feature plots for median values</h3>
+Shaded region shows the upper(75%) and lower(25%) percentiles and line shows the median value<br/>
+<h3> Evolution based features</h3>
+<img src="plots/Number of Retweets_median.png" width="800" height="500" />
+<img src="plots/Number of Adopters_median.png" width="800" height="500" />
+<h3> Network based features</h3>
+<img src="plots/Size of largest Connected Component_median.png" width="800" height="500" />
+<img src="plots/Number of Adopters with Heavy Following_median.png" width="800" height="500" />
+<h3> Geography based features</h3>
+<img src="plots/Number of Infected Geographies_median.png" width="800" height="500" />
+<img src="plots/Fraction of Intra Geography Activity (Retweets)_median.png" width="800" height="500" />
+<h3> Conductance based features</h3>
+<img src="plots/Second order derivative of conductance_median.png" width="800" height="500" />
+<img src="plots/Average rate of change of conductance (last 100)_median.png" width="800" height="500" />
+<img src="plots/Second order derivative of conductance_median_1.png" width="800" height="500" />
+<img src="plots/Absolute value of the cumulative conductance_median.png" width="800" height="500" />
+<h4> 24 Aug </h4>
+
+<h3>Sample simulation run</h3>
+alpha 0.05<br>
+beta 6.0<br>
+100thingstodobeforeidie 630 1397818252<br>
+631 1397818271 631<br>
+632 1397818282 633<br>
+633 1397818286 634<br>
+634 1397818318 635<br>
+635 1397818318 637<br>
+636 1397818338 637<br>
+637 1397818343 638<br>
+638 1397818352 639<br>
+639 1397818363 639<br>
+640 1397818366 641<br>
+641 1397818372 642<br>
+642 1397818393 642<br>
+643 1397818399 643<br>
+644 1397818410 643<br>
+645 1397818417 643<br>
+646 1397818421 643<br>
+647 1397818425 643<br>
+648 1397818427 644<br>
+649 1397818436 644<br>
+650 1397818437 644<br>
+651 1397818437 645<br>
+652 1397818439 646<br>
+653 1397818458 647<br>
+654 1397818476 649<br>
+655 1397818486 649<br>
+656 1397818507 650<br>
+657 1397818514 652<br>
+658 1397818516 653<br>
+659 1397818562 655<br>
+660 1397818562 657<br>
+661 1397818564 658<br>
+662 1397818568 659<br>
+663 1397818570 659<br>
+664 1397818570 660<br>
+665 1397818579 661<br>
+666 1397818582 663<br>
+667 1397818591 664<br>
+668 1397818598 666<br>
+669 1397818602 666<br>
+670 1397818605 666<br>
+671 1397818635 667<br>
+672 1397818647 667<br>
+673 1397818654 667<br>
+674 1397818661 667<br>
+675 1397818679 668<br>
+676 1397818696 669<br>
+677 1397818726 671<br>
+678 1397818747 671<br>
+679 1397818761 672<br>
+680 1397818786 672<br>
+681 1397818808 673<br>
+682 1397818838 674<br>
+683 1397818856 674<br>
+684 1397818879 675<br>
+685 1397818894 676<br>
+686 1397818918 676<br>
+687 1397818932 676<br>
+688 1397818947 679<br>
+689 1397818955 681<br>
+690 1397818957 681<br>
+691 1397818963 681<br>
+692 1397819001 682<br>
+693 1397819026 683<br>
+694 1397819052 684<br>
+695 1397819122 684<br>
+696 1397819138 688<br>
+697 1397819155 690<br>
+698 1397819169 691<br>
+699 1397819171 692<br>
+700 1397819173 694<br>
+701 1397819175 694<br>
+702 1397819176 695<br>
+703 1397819186 700<br>
+704 1397819190 705<br>
+705 1397819209 705<br>
+706 1397819212 705<br>
+707 1397819217 707<br>
+708 1397819225 708<br>
+709 1397819240 711<br>
+710 1397819246 716<br>
+711 1397819251 716<br>
+712 1397819255 720<br>
+713 1397819259 724<br>
+714 1397819264 726<br>
+715 1397819269 729<br>
+716 1397819302 732<br>
+717 1397819326 735<br>
+718 1397819332 740<br>
+719 1397819353 745<br>
+720 1397819364 747<br>
+721 1397819388 754<br>
+
+<h4> 26 Aug </h4>
+
+<h3> Change in feature values with number of tweets of the hashtag </h3>
+Figures are for top 2 features in each category. Feature values are averaged over all the topics.<br/>
+Figures on the left are for non-viral hashtags and those on the right are for viral hashtags.<br/>
+<h3> Evolution based features</h3>
+<img src="plots/Number of Retweets.png" width="800" height="500" />
+<img src="plots/Number of Adopters.png" width="800" height="500" />
+<h3> Network based features</h3>
+<img src="plots/Size of largest Connected Component.png" width="800" height="500" />
+<img src="plots/Number of Adopters with Heavy Following.png" width="800" height="500" />
+<h3> Geography based features</h3>
+<img src="plots/Number of Infected Geographies.png" width="800" height="500" />
+<img src="plots/Fraction of Intra Geography Activity (Retweets).png" width="800" height="500" />
+<h3> Conductance based features</h3>
+<img src="plots/Second order derivative of conductance.png" width="800" height="500" />
+<img src="plots/Average rate of change of conductance (last 100).png" width="800" height="500" />
+<h4> 19 Aug </h4>
+
+<h3> Change in feature values with number of tweets of the hashtag </h3>
+Figures are for top 2 features in each category. Hashtags were selected from those which were correctly predicted with high prediction probabilites (returned by trained model).<br/>
+Figures on the left are for non-viral hashtags and those on the right are for viral hashtags.<br/>
+Viral #tags: 7millionandcounting, heartbleed<br/>
+Non-viral #tags: 100thingstodobeforeidie, followmee3<br/>
+<h3> Evolution based features</h3>
+<img src="plots/timeline_Number of Retweets.jpeg" width="900" height="800" />
+<img src="plots/timeline_Number of Adopters.jpeg" width="900" height="800" />
+<h3> Network based features</h3>
+<img src="plots/timeline_Size of largest Connected Component.jpeg" width="900" height="800" />
+<img src="plots/timeline_Number of Adopters with Heavy Following.jpeg" width="900" height="800" />
+<h3> Geography based features</h3>
+<img src="plots/timeline_Number of Infected Geographies.jpeg" width="900" height="800" />
+<img src="plots/timeline_Fraction of Intra Geography Activity (Retweets).jpeg" width="900" height="800" />
+<h3> Conductance based features</h3>
+<img src="plots/timeline_Second order derivative of conductance.jpeg" width="900" height="800" />
+<img src="plots/timeline_Average rate of change of conductance (last 100).jpeg" width="900" height="800" />
+<h4> 11 Aug </h4>
+</body>
+</html>
