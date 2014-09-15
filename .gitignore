@@ -1,5 +1,5 @@
 *
-paper\ draft\ files/pd/MTP/*
+paper\ draft\ files/pd/MTP/
 !*/
 !*.py
 !/*.py
@@ -10,4 +10,3 @@ paper\ draft\ files/pd/MTP/*
 !*.html
 !/*.java
 !.gitignore
-paper\ draft\ files/pd/MTP/
