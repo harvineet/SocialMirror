@@ -78,7 +78,8 @@ def avoid_long_words_tw(key,N_tw): # change N for changing default prob for word
     return 10./(max(N,N_tw) * 10**len(key))
 
 N = 1024908267229 ## Number of tokens
-N_tw = 1059686838 ## Number of tokens in Twitter corpus with frequency greater than 1000
+N_tw = 1059686838 ## Number of tokens in Twitter corpus with frequency greater than 1000, 1 word tokens only
+# N_tw_bigram = 730715438## Number of tokens in Twitter corpus with frequency greater than 1000, 2 word tokens only
 
 Pw  = Pdist(datafile('count_1w.txt'), N, avoid_long_words)
 #### segment2: second version, with bigram counts, (p. 226-227)
@@ -95,6 +96,7 @@ def cPw(word, prev):
 
 P2w = Pdist(datafile('count_2w.txt'), N)
 Pw_tw = Pdist(datafile('twitter_1w.txt'), N_tw, avoid_long_words_tw)
+# P2w_tw = Pdist(datafile('twitter_2w.txt'), N_tw_bigram)
 
 @memo 
 def segment2(text, prev='<S>'): 
