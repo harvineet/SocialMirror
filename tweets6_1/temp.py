@@ -53,7 +53,7 @@ for val in range(0, 1):
 	dump = open("dump","a")
 	dump.write(str(val) + " started\n")
 	dump.close()
-	start = "mnt/tweets0.txt"
+	start = "mnt/tweets1.txt"
 	with open(start) as f:
 		list = []
 		for line in f:

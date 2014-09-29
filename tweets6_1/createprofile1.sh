@@ -4,7 +4,7 @@ START=$(date +%s);
 #if [[ $string == 8_ || $string == 21_ || $string == 27_ ]]; then
 if [ -d $string ]; then
 	# if [[ $string == *14_* || $string == *15_* || $string == *17_* || $string == *18_* || $string == *19_* || $string == *20_* || $string == *21_* ]]; then
-	if [[ $string == *35_*.tar || $string == *36_*.tar || $string == *37_*.tar ]]; then
+	if [[ $string == *35_* || $string == *36_* || $string == *37_* ]]; then
 	echo $string
 	python createprofile.py $string
 	END=$(date +%s);

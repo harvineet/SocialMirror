@@ -6,9 +6,9 @@ if [ -d $string ]; then
 	#if [[ $string == *11_* || $string == *12_* || $string == *13_* ]]; then
 	#if [[ $string == *22_* || $string == *23_* || $string == *24_* || $string == *25_* || $string == *26_* || $string == *27_* || $string == *28_* ]]; then
 	# if [[ $string == *38_*.tar || $string == *39_*.tar ]]; then
-	if [[ $string == tweets*.tar ]]; then
+	if [[ $string == tweets* ]]; then
 	echo $string
-	python createprofile.py $string
+	python createprofile_1.py $string
 	END=$(date +%s);
 	echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'
 	fi

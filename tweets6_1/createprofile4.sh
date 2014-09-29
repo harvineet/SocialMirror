@@ -6,7 +6,7 @@ if [ -d $string ]; then
 	#if [[ $string == *11_* || $string == *12_* || $string == *13_* ]]; then
 	#if [[ $string == *22_* || $string == *23_* || $string == *24_* || $string == *25_* || $string == *26_* || $string == *27_* || $string == *28_* ]]; then
 	# if [[ $string == *38_*.tar || $string == *39_*.tar ]]; then
-	if [[ $string == latest6_9.tar || $string == 8_*.tar  || $string == 9_*.tar ]]; then
+	if [[ $string == latest6_9 || $string == 8_*  || $string == 9_* ]]; then
 	echo $string
 	python createprofile.py $string
 	END=$(date +%s);

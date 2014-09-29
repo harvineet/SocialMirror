@@ -1,7 +1,8 @@
 *
 paper\ draft\ files/pd/MTP/
 tweets6_1/cascades_group_code/
-!*/
+hashtag_segment/word2vec/
+#!*/
 !*.py
 !/*.py
 !*.bat
