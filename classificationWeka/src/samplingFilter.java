@@ -39,7 +39,7 @@ public class samplingFilter {
 	        RandomForest rf = new RandomForest();         
 	        rf.setOptions(options1);     // set the options
 	        
-	        for(double spread=4.0;spread<=15.0;spread=spread+0.5) //int perc=100;perc<=130;perc=perc+5
+	        for(double spread=5.9;spread<=7.0;spread=spread+0.1) //int perc=100;perc<=130;perc=perc+5
 	        {
 	        	System.out.println(spread);
 	        	SpreadSubsample filter = new SpreadSubsample();

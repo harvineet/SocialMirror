@@ -246,7 +246,7 @@ def main(alpha, beta, sim_run):
 		toc = time.clock()
 		print "Synthetic spread topic", (toc-tic)*1000
 		
-		dump_coupling_pickle(tag,coup_prob)	
+		dump_coupling_pickle(u[0],coup_prob)	
 	fd.close()
 	fr.close()
 	# close file handles of follower list files

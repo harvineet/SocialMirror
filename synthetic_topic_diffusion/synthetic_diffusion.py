@@ -134,7 +134,7 @@ print "alpha", alpha
 print "beta", beta
 fr = open('timeline_data/timeline_weng_sample', 'r')
 fd = open("parametric_spread/synthetic_spread_log/"+sim_run+"/"+alpha+"_"+beta+".txt", 'wb')
-fd.write("tagName,alpha,beta,totalSpread,initTweetNum,initTimeTime,totalSynSpread,10000tweetTime\n")
+fd.write("tagName,alpha,beta,totalSpread,initTweetNum,initTimeTime,totalOrgSpread,totalSynSpread,presentTweetTime\n")
 
 #alpha = 0.07 #float() #0.01 #1.0
 #beta = 6.3 /3600 #float() # in hours, for underflow
@@ -155,6 +155,7 @@ for line in fr:
 	init_tweet_num = random.randint(1000,1500) # change for prediction threshold 1500
 	init_tweet_time = int(u[init_tweet_num][0:u[init_tweet_num].index(',')])
 	coup_prob = load_coupling_pickle(u[0]) # read pre-stored eta values for particular tag and corresponding timepoints of tweets
+	coup_pickle_changed = False # avoiding overwriting of pickle files by parallel processes if no change in dict
 	print u[0],init_tweet_num,init_tweet_time
 	nodes_time = dict()
 	nodes = set()
@@ -212,9 +213,11 @@ for line in fr:
 				if present_time in coup_prob[i]:
 					eta_prob_coupling = coup_prob[i][present_time]
 				else:
+					coup_pickle_changed = True
 					eta_prob_coupling = random.random()
 					coup_prob[i][present_time] = eta_prob_coupling
 			else:
+				coup_pickle_changed = True
 				coup_prob[i] = dict()
 				eta_prob_coupling = random.random() # check if higher precision can be taken
 				coup_prob[i][present_time] = eta_prob_coupling
@@ -234,9 +237,11 @@ for line in fr:
 		candidates.update(infected_candidates)
 		print (init_tweet_num+iterCount),present_time,numTweets
 		synTweets.append(numTweets)
-		fd.write(u[0]+","+str(alpha)+","+str(beta)+","+str(len(u))+","+str(init_tweet_num)+","+str(init_tweet_time)+","+str(numTweets)+","+str(present_time)+"\n")
+		fd.write(u[0]+","+str(alpha)+","+str(beta)+","+str(len(u))+","+str(init_tweet_num)+","+str(init_tweet_time)+","+str(init_tweet_num+iterCount)+","+str(numTweets)+","+str(present_time)+"\n")
 		
 		if (iterCount>max_iter):
+			break
+		if (abs(init_tweet_num+iterCount-numTweets)>iterCount*10):
 			break
 		if len(synTweets)>10:
 			if len(set(synTweets[-10:]))==1:
@@ -250,7 +255,8 @@ for line in fr:
 	toc = time.clock()
 	print "Synthetic spread topic", (toc-tic)*1000
 	
-	dump_coupling_pickle(tag,coup_prob)	
+	if (coup_pickle_changed == True):
+		dump_coupling_pickle(u[0],coup_prob)	
 fd.close()
 fr.close()
 # close file handles of follower list files
