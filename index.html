@@ -1,6 +1,29 @@
 <html>
 <body>
 
+<h3>Word vector representations using GloVe and word2vec</h3>
+Training corpus - November 2013 twitter crawl (35896465 tweets)</br>
+Some basic pre-processing (removing user mentions, url, special characters, lowercase, etc.), tokenisation using whitespace only</br>
+Training time: word2vec (222m22s), GloVe (150m19s)</br>
+Some interesting observations from word vectors obtained using word2vec (200 dimension vectors):</br>
+</br>
+Query	- Similar words (cosine similarity)</br>
+</br>
+heartbleed - openssl, cve</br>
+sfbatkid - batkid, rescue, makeawish</br>
+bjp	- aap, Modi, Delhi</br>
+snowinapril - whereisspring</br>
+snowden - nsa</br>
+</br>
+Analogy task (A : B :: C : ?)</br>
+</br>
+king : queen :: man : (woman)</br>
+mufc : football :: nba : (basketball)</br>
+aap : kejriwal :: bjp : (modi)</br>
+
+<br>Reference http://nlp.stanford.edu/projects/glove/, https://code.google.com/p/word2vec/
+<h4> 7 Oct </h4>
+
 <h3>Hashtag Segmentation adding Twitter based corpus in previous model</h3>
 <pre>
 (Hashtag)	(Previous Segmentation)	(Current Segmentation)
