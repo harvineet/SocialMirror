@@ -2,7 +2,9 @@
 paper\ draft\ files/pd/MTP/
 tweets6_1/cascades_group_code/
 hashtag_segment/word2vec/
+hashtag_segment/gensim-0.10.2/
 glove/glove/
+tweets_repository/Nov2013/tokenizer/
 #!*/
 !*.py
 !/*.py
