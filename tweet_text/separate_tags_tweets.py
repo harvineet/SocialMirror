@@ -53,7 +53,7 @@ with open('../timeline_weng', 'r') as fr:
 
 path_tweet_extracts = 'tweet_extracts'
 # fd = open("tweets_selected_comb.txt","w")
-fd1 = open("tweets.txt","wb")
+# fd1 = open("tweets.txt","wb")
 tags_sel = dict()
 for tweet_folder in os.listdir(path_tweet_extracts):
 	print "tweets folder", tweet_folder
@@ -72,7 +72,7 @@ for tweet_folder in os.listdir(path_tweet_extracts):
 				else:
 					tags_sel[tweet_tag] = 1
 				# fd.write(tweet_preprocess(tweet_text)+"\n")
-				fd1.write(tweet_text+"\n")
+				# fd1.write(tweet_text+"\n")
 				# if(tweet_time >= 1395858601	 and tweet_time <= 1398796199 and tweet_author in selected_users):
 						# tweet_tags = set([tag.strip("#") for tag in tweet_text.split() if tag.startswith("#")])
 						# for tag in tweet_tags:
@@ -86,7 +86,7 @@ for tweet_folder in os.listdir(path_tweet_extracts):
 				print e
 				# print line
 # fd.close()
-fd1.close()
+# fd1.close()
 print len(tags_sel), len(tag_selected)
 print float(sum([x for x in tags_sel.values()]))/len(tags_sel)
 for i in tag_selected:

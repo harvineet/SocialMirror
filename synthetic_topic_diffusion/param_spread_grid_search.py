@@ -13,10 +13,10 @@ def sysCall(alpha,beta,sim_run):
 	
 if __name__ == '__main__':
 	a1 = 0.1
-	a2 = 1
+	a2 = 2
 	step_a = 0.1
 	b1 = 1
-	b2 = 10
+	b2 = 16
 	step_b = 1
 	sim_run = sys.argv[1]
 	pool = Pool(processes=5) 

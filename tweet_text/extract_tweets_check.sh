@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 python extract_tweets_check.py 1 50 &
 python extract_tweets_check.py 50 100 &
 python extract_tweets_check.py 100 160 &

@@ -71,29 +71,29 @@ for tweet_folder in folder_contents:
 		if "tweetfile" in txtfile:
 			tweetfile = txtfile
 	path_txtfile = os.path.join(path_tweet_extracts,tweet_folder,'mnt',tweetfile)
-	# even_line_num=0
+	even_line_num=0
 	with open(path_txtfile, 'r') as fr:
 		for line in fr:
 			try:
 				line = line.rstrip()
 				u = line.split('\t')
-				# if even_line_num==0 and len(u) == 8:
-				tweet_text = u[0]
-				tweet_author = int(u[2])
-				tweet_time = get_unix_time(u[3])
-				if(tweet_author in store):
-					time_pauthor = store[tweet_author]
-				else:
-					time_pauthor = 0
-				if(tweet_time >= 1395858601	 and tweet_time <= 1398796199 and tweet_author in selected_users and tweet_time > time_pauthor):
-					tweet_tags = [tag.strip("#") for tag in tweet_text.split() if tag.startswith("#")]
-					for tag in tweet_tags:
-						tags_org.add(tag) # remove if addition takes time
-						tag=tag.lower()
-						if tag in tag_selected:
-							(thr_timestamp,_) = tag_selected[tag]
-							if tweet_time<=thr_timestamp: #tweets before pred thr
-								fd.write(tag+"\t"+tweet_text+"\t"+str(tweet_author)+"\t"+str(tweet_time)+"\n")
+				if even_line_num==0: #and len(u) == 8:
+					tweet_text = u[0]
+					tweet_author = int(u[2])
+					tweet_time = get_unix_time(u[3])
+					if(tweet_author in store):
+						time_pauthor = store[tweet_author]
+					else:
+						time_pauthor = 0
+					if(tweet_time >= 1395858601	 and tweet_time <= 1398796199 and tweet_author in selected_users and tweet_time > time_pauthor):
+						tweet_tags = [tag.strip("#") for tag in tweet_text.split() if tag.startswith("#")]
+						for tag in tweet_tags:
+							tags_org.add(tag) # remove if addition takes time
+							tag=tag.lower()
+							if tag in tag_selected:
+								(thr_timestamp,_) = tag_selected[tag]
+								if tweet_time<=thr_timestamp: #tweets before pred thr
+									fd.write(tag+"\t"+tweet_text+"\t"+str(tweet_author)+"\t"+str(tweet_time)+"\n")
 				# else:
 					# lang = u[-1]
 					# hashtag = u[0].split(',')[:-1]
@@ -101,10 +101,10 @@ for tweet_folder in folder_contents:
 				# print e
 				# print line
 				fd_err.write(line+"\n")
-			_=next(fr)
-			# even_line_num = 1 - even_line_num
+			# _=next(fr)
+			even_line_num = 1 - even_line_num
 fd.close()
 fd_err.close()
-with open("/twitterSimulations/tweet_text/tags_round2_"+fwritenum+".txt","w") as fd_tag:
-	for i in tags_org:
-		fd_tag.write(i+"\n")
+# with open("/twitterSimulations/tweet_text/tags_round2_"+fwritenum+".txt","w") as fd_tag:
+	# for i in tags_org:
+		# fd_tag.write(i+"\n")
