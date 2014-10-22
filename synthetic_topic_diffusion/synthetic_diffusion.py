@@ -165,6 +165,8 @@ for line in fr:
 	timestamp = 0
 	iterCount = 0
 	synTweets = []
+	sum_abs_error = 0.
+	mean_abs_error = 0.
 	
 	for i in range(1, len(u)): 
 		timestamp = int(u[i][0:u[i].index(',')])
@@ -237,14 +239,20 @@ for line in fr:
 		candidates.update(infected_candidates)
 		print (init_tweet_num+iterCount),present_time,numTweets
 		synTweets.append(numTweets)
-		fd.write(u[0]+","+str(alpha)+","+str(beta)+","+str(len(u))+","+str(init_tweet_num)+","+str(init_tweet_time)+","+str(init_tweet_num+iterCount)+","+str(numTweets)+","+str(present_time)+"\n")
+		
+		sum_abs_error += abs(numTweets-init_tweet_num-iterCount)
+		mean_abs_error = sum_abs_error/iterCount
+		
+		fd.write(u[0]+","+str(alpha)+","+str(beta)+","+str(len(u))+","+str(init_tweet_num)+","+str(init_tweet_time)+","+str(init_tweet_num+iterCount)+","+str(numTweets)+","+str(present_time)+","+str(mean_abs_error)+"\n")
 		
 		if (iterCount>max_iter):
+			break
+		if (mean_abs_error>100):
 			break
 		if (abs(init_tweet_num+iterCount-numTweets)>iterCount*10):
 			break
 		if len(synTweets)>10:
-			if len(set(synTweets[-10:]))==1:
+			if len(set(synTweets))==1:
 				break
 			_=synTweets.pop(0)
 				
