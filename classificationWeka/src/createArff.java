@@ -40,6 +40,12 @@ public class createArff {
 			System.out.println(child);
 			String csvFileNameRel = child.getName();
 			csvFileNameRel = csvFileNameRel.replace(".csv",".arff");
+			
+			File arffFile = new File("data/arff", csvFileNameRel);
+			System.out.println(arffFile);
+			String[] options = {child.getPath(),arffFile.getPath(),"","false"};
+			RemoveAttr(options);
+			
 			/*
 			//feature combinations for 32 features (with std)
 			// e
@@ -88,6 +94,8 @@ public class createArff {
 			String[] options8 = {child.getPath(),arffFile8.getPath(),"1,16,11,12,13,14,15,19,7,10,8,6,5,9,2,20,21,28,29,30,31,32,33","false"};
 			RemoveAttr(options8);			
 			*/
+			
+			/*
 			// feature combinations for 26 features (without std)
 			// e
 			File arffFile = new File("data/arff", "e_"+csvFileNameRel);
@@ -134,6 +142,8 @@ public class createArff {
 			System.out.println(arffFile8);
 			String[] options8 = {child.getPath(),arffFile8.getPath(),"1,16,11,12,13,14,15,19,7,10,8,6,5,9,2,20,21","false"};
 			RemoveAttr(options8);
+			*/
+			
 			/*
 			//removing conductance derivative features
 			File arffFile = new File("data/arff", "c1_"+csvFileNameRel);
@@ -161,12 +171,14 @@ public class createArff {
 			String[] options6 = {child.getPath(),arffFile6.getPath(),"1,16,15,19","false"};
 			RemoveAttr(options6);
 			*/
+			
 			/*
 			// removing ratiofirsttosecond feature also with tagname and numtweets
 			File arffFile3 = new File("data/arff", csvFileNameRel);
 			System.out.println(arffFile3);
 			String[] options3 = {child.getPath(),arffFile3.getPath(),"1,2,16","false"};
-			RemoveAttr(options3);*/
+			RemoveAttr(options3);
+			*/
 		}
 	}
 }

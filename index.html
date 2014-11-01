@@ -15,9 +15,25 @@ Sample clusters with likely category (not entirely):</br>
 <a href="Segment2.txt">Cluster of hashtags (Latin)</a>
 <a href="Segment4.txt">Cluster of hashtags (Sports)</a>
 <a href="Segment8.txt">Cluster of hashtags (Government, Politics)</a>
+<br>
+<br>Classification accuracy under various settings: 
+<br>Using hashtag cluster (obtained using kmeans clustering on histogram of count vectors for each hashtag) as feature:
+<pre>
+Word clusters	Hashtag clusters	AUPRC
+100			9		0.294
+500			20		0.292
+1000			10		0.296
+1000			20		0.294
+1000			30		0.292
+1000			50		0.291
+</pre>
 
-<br>Classification accuracy using hashtag cluster as feature:
-AUC: 0.294
+Using histogram of count vectors obtained for each hashtag directly as features:</br>
+<pre>
+Word clusters		AUPRC
+500			0.258
+1000			0.232
+</pre>
 <h4> 14 Oct </h4>
 
 <h3>Word vector representations using GloVe and word2vec</h3>

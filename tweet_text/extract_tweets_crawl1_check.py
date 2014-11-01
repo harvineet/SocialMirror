@@ -70,6 +70,8 @@ for tweet_folder in folder_contents:
 				# line = line.rstrip()
 				u = line.split('\t')
 				if even_line_num==0: #and len(u) == 8:
+					if len(u) != 8:
+						continue
 					tweet_text = u[0]
 					tweet_author = int(u[2])
 					tweet_time = get_unix_time(u[3])

@@ -258,7 +258,7 @@ for line in fr:
 				
 		toc1 = time.clock()
 		print "Synthetic spread tweet", (toc1-tic1)*1000
-		fd.flush()
+		# fd.flush()
 		
 	toc = time.clock()
 	print "Synthetic spread topic", (toc-tic)*1000

@@ -16,6 +16,7 @@ public class samplingFilter {
 		File dir = new File("data/arff");
 		File[] directoryListing = dir.listFiles();
 		for (File child : directoryListing) {
+			System.out.println(child);
 			BufferedReader reader = new BufferedReader(
 	                new FileReader(child));
 			Instances data = new Instances(reader);
@@ -39,7 +40,7 @@ public class samplingFilter {
 	        RandomForest rf = new RandomForest();         
 	        rf.setOptions(options1);     // set the options
 	        
-	        for(double spread=3.0;spread<=5.5;spread=spread+0.5) //int perc=100;perc<=130;perc=perc+5
+	        for(double spread=4.0;spread<=5.0;spread=spread+0.5) //int perc=100;perc<=130;perc=perc+5
 	        {
 	        	System.out.println(spread);
 	        	SpreadSubsample filter = new SpreadSubsample();
