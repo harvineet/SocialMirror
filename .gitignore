@@ -5,7 +5,7 @@ word2vec/
 hashtag_segment/gensim-0.10.2/
 glove/glove/
 tweets_repository/Nov2013/tokenizer/
-histogram_of_counts/kmeans/ActivityRecognition_code/
+histogram_of_counts/kmeans/
 #!*/
 !*.py
 !/*.py
