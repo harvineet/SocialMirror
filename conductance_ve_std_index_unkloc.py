@@ -1,5 +1,7 @@
-# file to create the features for different prediction thresholds where virality threshold and set of topics remains same, adding std of conductance features #correction for self-initiated adopters and addition of tweeting entropy, number of adopters of followers
-#using edge and vertex expansion instead of conductance
+# file to create the features for different prediction thresholds where virality threshold and set of topics remains same, adding std of conductance features 
+#correction for self-initiated adopters and addition of tweeting entropy, number of adopters of followers
+#using conductance and vertex expansion 
+#correction for unknown location, changed comm to 142 length list, last location for unknown
 import json
 import sys
 import time
@@ -213,8 +215,8 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 	fr = open('timeline_data/timeline_weng', 'r')
 	fr1 = open('retweeteds_weng', 'r')
 	fr2 = open('user_mentions_weng', 'r')
-	fd=open("./conductance_std_features_td/expansion_features/feature_"+str(pred_thr)+".csv",'w')
-	fd_cond=open("./conductance_std_features_td/expansion_features/cond_values_all/feature_"+str(pred_thr)+".csv",'w')
+	fd=open("./conductance_std_features_td/cond_ve_features/feature_"+str(pred_thr)+".csv",'w')
+	fd_cond=open("./conductance_std_features_td/cond_ve_features/cond_values_all/feature_"+str(pred_thr)+".csv",'w')
 	fd.write("TagName,RatioSecondtoFirst,RatioSelfInitCommu,RatioCrossGeoEdges,#globalSelfInitAdoptersFollowers,#globalAdopters,#heavyusers,Density,LargestSize,NumEdges,Conduct1,Conduct2,Conduct3,Conduct4,Conduct2d,NumTweets,TimeFirst1000,NoOfAdopters,Conductance,RatioOfSingletons,RatioOfConnectedComponents,InfectedCommunities,UsageEntropy,NumOfRT,NumOfMention,IntraRT,IntraMen,UsageEntropyTweets,#globalAdoptersFollowers,Conduct1_std,Conduct2_std,Conduct3_std,Conduct4_std,Conduct2d_std,Conductance_std,Conduct1_ve,Conduct2_ve,Conduct3_ve,Conduct4_ve,Conduct2d_ve,Conductance_ve,Conduct1_vestd,Conduct2_vestd,Conduct3_vestd,Conduct4_vestd,Conduct2d_vestd,Conductance_vestd,Class\n")
 	if(pred_thr==200):
 		cond_values_all = ",".join(["Cond"+str(c) for c in reversed(range(200))])
@@ -233,14 +235,14 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 		if len(u) <= pred_thr:
 			continue
 		#moving window conductance features
-		comm = [0]*141
-		comm_tweets = [0]*141
+		comm = [0]*142
+		comm_tweets = [0]*142
 		timestamp = 0
 		nodes = set()
 		numTweets = 0
 		expose = 0.1
 		expose_num = 0.1
-		expose_col = [] #edge expansion
+		expose_col = [] #conductance
 		expose_ve_col = [] #vertex expansion
 		timestamp_col = []
 		numTweets1 = 0
@@ -299,8 +301,8 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 				globalFollowerAdopters = len(globalFollowerAdopters_set)
 			nodes.add(author)
 			timestamp_col.append(timestamp)
-			# expose_col.append(float(expose_num)/expose)
-			expose_col.append(float(expose_num)/len(nodes))
+			expose_col.append(float(expose_num)/expose)
+			# expose_col.append(float(expose_num)/len(nodes))
 			expose_ve_col.append(float(globalFollowerAdopters)/len(nodes))
 
 		nodes = list(nodes)
@@ -496,7 +498,7 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 			for i in range(0, len(timestamp_col)):
 				fdtemp.write(str(timestamp_col[i]) + ' ' + str(expose_col[i]) + '\n')
 			fdtemp.close()'''
-			fd.write(str(u[0])+','+str(float(secondLarge)/large)+','+str(selfInitGeo/infectCommunit)+','+str(numEdgesCrossing/numEdges)+','+str(exposureGA)+','+str(globalAdopters)+','+str(heavy)+','+str(float(numEdges)/len(nodes))+','+str(large)+','+str(numEdges)+',' + str(expose1)+','+str(expose2)+','+str(expose3)+','+str(expose4)+','+str(expose2d)+','+str(numTweets)+','+str(val)+','+str(len(nodes))+','+str(float(expose_num)/len(nodes))+','+str(float(singleton)/len(nodes))+','+str(float(numOfSets)/len(nodes))+','+str(infectCommunit)+','+str(usagee)+','+str(numRT)+','+str(numMention)+','+str(val1)+','+str(val2)+','+str(usagee_tweets)+','+str(globalFollowerAdopters)+','+str(stdev(c_expose1))+','+str(stdev(c_expose2))+','+str(stdev(c_expose3))+','+str(stdev(c_expose4))+','+str(stdev(c_expose2d))+','+str(stdev(c_cond))+',' + str(expose1_ve)+','+str(expose2_ve)+','+str(expose3_ve)+','+str(expose4_ve)+','+str(expose2d_ve)+','+str(float(globalFollowerAdopters)/len(nodes))+','+str(stdev(c_expose1_ve))+','+str(stdev(c_expose2_ve))+','+str(stdev(c_expose3_ve))+','+str(stdev(c_expose4_ve))+','+str(stdev(c_expose2d_ve))+','+str(stdev(c_cond_ve))+',1\n')
+			fd.write(str(u[0])+','+str(float(secondLarge)/large)+','+str(selfInitGeo/infectCommunit)+','+str(numEdgesCrossing/numEdges)+','+str(exposureGA)+','+str(globalAdopters)+','+str(heavy)+','+str(float(numEdges)/len(nodes))+','+str(large)+','+str(numEdges)+',' + str(expose1)+','+str(expose2)+','+str(expose3)+','+str(expose4)+','+str(expose2d)+','+str(numTweets)+','+str(val)+','+str(len(nodes))+','+str(float(expose_num)/expose)+','+str(float(singleton)/len(nodes))+','+str(float(numOfSets)/len(nodes))+','+str(infectCommunit)+','+str(usagee)+','+str(numRT)+','+str(numMention)+','+str(val1)+','+str(val2)+','+str(usagee_tweets)+','+str(globalFollowerAdopters)+','+str(stdev(c_expose1))+','+str(stdev(c_expose2))+','+str(stdev(c_expose3))+','+str(stdev(c_expose4))+','+str(stdev(c_expose2d))+','+str(stdev(c_cond))+',' + str(expose1_ve)+','+str(expose2_ve)+','+str(expose3_ve)+','+str(expose4_ve)+','+str(expose2d_ve)+','+str(float(globalFollowerAdopters)/len(nodes))+','+str(stdev(c_expose1_ve))+','+str(stdev(c_expose2_ve))+','+str(stdev(c_expose3_ve))+','+str(stdev(c_expose4_ve))+','+str(stdev(c_expose2d_ve))+','+str(stdev(c_cond_ve))+',1\n')
 			
 			fd_cond.write(str(u[0])+','+','.join(str(x) for x in expose_col[-251:])+',1\n')
 		else:
@@ -504,7 +506,7 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 			for i in range(0, len(timestamp_col)):
 				fdtemp.write(str(timestamp_col[i]) + ' ' + str(expose_col[i]) + '\n')
 			fdtemp.close()'''
-			fd.write(str(u[0])+','+str(float(secondLarge)/large)+','+str(selfInitGeo/infectCommunit)+','+str(numEdgesCrossing/numEdges)+','+str(exposureGA)+','+str(globalAdopters)+','+str(heavy)+','+str(float(numEdges)/len(nodes))+','+str(large)+','+str(numEdges)+',' + str(expose1)+','+str(expose2)+','+str(expose3)+','+str(expose4)+','+str(expose2d)+','+str(numTweets)+','+str(val)+','+str(len(nodes))+','+str(float(expose_num)/len(nodes))+','+str(float(singleton)/len(nodes))+','+str(float(numOfSets)/len(nodes))+','+str(infectCommunit)+','+str(usagee)+','+str(numRT)+','+str(numMention)+','+str(val1)+','+str(val2)+','+str(usagee_tweets)+','+str(globalFollowerAdopters)+','+str(stdev(c_expose1))+','+str(stdev(c_expose2))+','+str(stdev(c_expose3))+','+str(stdev(c_expose4))+','+str(stdev(c_expose2d))+','+str(stdev(c_cond))+',' + str(expose1_ve)+','+str(expose2_ve)+','+str(expose3_ve)+','+str(expose4_ve)+','+str(expose2d_ve)+','+str(float(globalFollowerAdopters)/len(nodes))+','+str(stdev(c_expose1_ve))+','+str(stdev(c_expose2_ve))+','+str(stdev(c_expose3_ve))+','+str(stdev(c_expose4_ve))+','+str(stdev(c_expose2d_ve))+','+str(stdev(c_cond_ve))+',0\n')
+			fd.write(str(u[0])+','+str(float(secondLarge)/large)+','+str(selfInitGeo/infectCommunit)+','+str(numEdgesCrossing/numEdges)+','+str(exposureGA)+','+str(globalAdopters)+','+str(heavy)+','+str(float(numEdges)/len(nodes))+','+str(large)+','+str(numEdges)+',' + str(expose1)+','+str(expose2)+','+str(expose3)+','+str(expose4)+','+str(expose2d)+','+str(numTweets)+','+str(val)+','+str(len(nodes))+','+str(float(expose_num)/expose)+','+str(float(singleton)/len(nodes))+','+str(float(numOfSets)/len(nodes))+','+str(infectCommunit)+','+str(usagee)+','+str(numRT)+','+str(numMention)+','+str(val1)+','+str(val2)+','+str(usagee_tweets)+','+str(globalFollowerAdopters)+','+str(stdev(c_expose1))+','+str(stdev(c_expose2))+','+str(stdev(c_expose3))+','+str(stdev(c_expose4))+','+str(stdev(c_expose2d))+','+str(stdev(c_cond))+',' + str(expose1_ve)+','+str(expose2_ve)+','+str(expose3_ve)+','+str(expose4_ve)+','+str(expose2d_ve)+','+str(float(globalFollowerAdopters)/len(nodes))+','+str(stdev(c_expose1_ve))+','+str(stdev(c_expose2_ve))+','+str(stdev(c_expose3_ve))+','+str(stdev(c_expose4_ve))+','+str(stdev(c_expose2d_ve))+','+str(stdev(c_cond_ve))+',0\n')
 			
 			fd_cond.write(str(u[0])+','+','.join(str(x) for x in expose_col[-251:])+',0\n')
 	fd.close()

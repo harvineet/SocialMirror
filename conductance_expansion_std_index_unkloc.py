@@ -1,5 +1,7 @@
-# file to create the features for different prediction thresholds where virality threshold and set of topics remains same, adding std of conductance features #correction for self-initiated adopters and addition of tweeting entropy, number of adopters of followers
-#using edge and vertex expansion instead of conductance
+# file to create the features for different prediction thresholds where virality threshold and set of topics remains same, adding std of conductance features 
+#correction for self-initiated adopters and addition of tweeting entropy, number of adopters of followers
+#using edge and vertex expansion instead of conductance 
+#correction for unknown location, changed comm to 142 length list, last location for unknown
 import json
 import sys
 import time
@@ -233,8 +235,8 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 		if len(u) <= pred_thr:
 			continue
 		#moving window conductance features
-		comm = [0]*141
-		comm_tweets = [0]*141
+		comm = [0]*142
+		comm_tweets = [0]*142
 		timestamp = 0
 		nodes = set()
 		numTweets = 0
