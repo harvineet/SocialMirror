@@ -1,4 +1,5 @@
 *
+!*/
 paper\ draft\ files/pd/MTP/
 tweets6_1/cascades_group_code/
 word2vec/
@@ -6,7 +7,6 @@ hashtag_segment/gensim-0.10.2/
 glove/glove/
 tweets_repository/Nov2013/tokenizer/
 histogram_of_counts/kmeans/
-#!*/
 !*.py
 !/*.py
 !*.bat
