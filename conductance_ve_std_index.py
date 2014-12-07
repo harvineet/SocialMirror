@@ -209,12 +209,12 @@ print 'Location Read\n'
 # retweet_line = "";
 # u1 = []
 tic = time.clock()
-for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
-	fr = open('timeline_data/timeline_weng', 'r')
+for pred_thr in [10,50,100,150,200,250,500]:#1500,250,500,1000,2000,2500,3000,4000,5000,3500,4500,5500,6000
+	fr = open('timeline_data/timeline_weng_1500', 'r')
 	fr1 = open('retweeteds_weng', 'r')
 	fr2 = open('user_mentions_weng', 'r')
-	fd=open("./conductance_std_features_td/cond_ve_features/feature_"+str(pred_thr)+".csv",'w')
-	fd_cond=open("./conductance_std_features_td/cond_ve_features/cond_values_all/feature_"+str(pred_thr)+".csv",'w')
+	fd=open("./conductance_std_features_td/cond_ve_features/selected_topics/feature_"+str(pred_thr)+".csv",'w')
+	#fd_cond=open("./conductance_std_features_td/cond_ve_features/cond_values_all/feature_"+str(pred_thr)+".csv",'w')
 	fd.write("TagName,RatioSecondtoFirst,RatioSelfInitCommu,RatioCrossGeoEdges,#globalSelfInitAdoptersFollowers,#globalAdopters,#heavyusers,Density,LargestSize,NumEdges,Conduct1,Conduct2,Conduct3,Conduct4,Conduct2d,NumTweets,TimeFirst1000,NoOfAdopters,Conductance,RatioOfSingletons,RatioOfConnectedComponents,InfectedCommunities,UsageEntropy,NumOfRT,NumOfMention,IntraRT,IntraMen,UsageEntropyTweets,#globalAdoptersFollowers,Conduct1_std,Conduct2_std,Conduct3_std,Conduct4_std,Conduct2d_std,Conductance_std,Conduct1_ve,Conduct2_ve,Conduct3_ve,Conduct4_ve,Conduct2d_ve,Conductance_ve,Conduct1_vestd,Conduct2_vestd,Conduct3_vestd,Conduct4_vestd,Conduct2d_vestd,Conductance_vestd,Class\n")
 	if(pred_thr==200):
 		cond_values_all = ",".join(["Cond"+str(c) for c in reversed(range(200))])
@@ -222,7 +222,7 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 		cond_values_all = ",".join(["Cond"+str(c) for c in reversed(range(250))])
 	else:
 		cond_values_all = ",".join(["Cond"+str(c) for c in reversed(range(251))])
-	fd_cond.write("TagName,"+cond_values_all+",Class\n")
+	#fd_cond.write("TagName,"+cond_values_all+",Class\n")
 	mention_line = "";
 	u2 = []
 	retweet_line = "";
@@ -435,8 +435,14 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 		c_expose4 = []
 		#c_expose5 = []
 		c_expose2d = []
-		c_cond = expose_col[-100:]
-		for i in reversed(range(0,100)):
+		if pred_thr<=50:
+			num_std_values=5
+		elif pred_thr<=100:
+			num_std_values=25
+		else:
+			num_std_values=100
+		c_cond = expose_col[-num_std_values:]
+		for i in reversed(range(0,num_std_values)):
 			try:
 				expose1 = (expose_col[l-i] - expose_col[l-i-20])*36000000/(timestamp_col[l-i] - timestamp_col[l-i-20])
 				c_expose1.append(expose1)
@@ -447,7 +453,7 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 				pexpose2 = (expose_col[l-i-50] - expose_col[l-i-100])*36000000/(timestamp_col[l-i-50] - timestamp_col[l-i-100])
 				expose2d = (expose2 - pexpose2)*36000000/(timestamp_col[l-i] - timestamp_col[l-i-50])
 				c_expose2d.append(expose2d)
-				if(pred_thr==200 or pred_thr==250):
+				if(pred_thr<=250):
 					expose4 = (expose_col[l-i] - expose_col[0])*36000000/(timestamp_col[l-i] - timestamp_col[0]) # 250 not correct, changes for different i
 					c_expose4.append(expose4)
 				else:
@@ -455,7 +461,8 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 					c_expose4.append(expose4)
 				#expose5 = (expose_col[l] - expose_col[l-500])*36000000/(timestamp_col[l] - timestamp_col[l-500])
 			except:
-				print u[0]
+				pass
+				# print u[0]
 		l = len(expose_ve_col) - 1
 		expose1_ve = 0
 		expose2_ve = 0
@@ -470,8 +477,8 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 		c_expose4_ve = []
 		#c_expose5 = []
 		c_expose2d_ve = []
-		c_cond_ve = expose_ve_col[-100:]
-		for i in reversed(range(0,100)):
+		c_cond_ve = expose_ve_col[-num_std_values:]
+		for i in reversed(range(0,num_std_values)):
 			try:
 				expose1_ve = (expose_ve_col[l-i] - expose_ve_col[l-i-20])*36000000/(timestamp_col[l-i] - timestamp_col[l-i-20])
 				c_expose1_ve.append(expose1_ve)
@@ -482,7 +489,7 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 				pexpose2_ve = (expose_ve_col[l-i-50] - expose_ve_col[l-i-100])*36000000/(timestamp_col[l-i-50] - timestamp_col[l-i-100])
 				expose2d_ve = (expose2_ve - pexpose2_ve)*36000000/(timestamp_col[l-i] - timestamp_col[l-i-50])
 				c_expose2d_ve.append(expose2d_ve)
-				if(pred_thr==200 or pred_thr==250):
+				if(pred_thr<=250):
 					expose4_ve = (expose_ve_col[l-i] - expose_ve_col[0])*36000000/(timestamp_col[l-i] - timestamp_col[0]) # 250 not correct, changes for different i
 					c_expose4_ve.append(expose4_ve)
 				else:
@@ -490,7 +497,8 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 					c_expose4_ve.append(expose4_ve)
 				#expose5 = (expose_ve_col[l] - expose_ve_col[l-500])*36000000/(timestamp_col[l] - timestamp_col[l-500])
 			except:
-				print u[0]
+				pass
+				# print u[0]
 		if len(u) > 10000:
 			'''fdtemp = open('dumpviral/'+u[0], 'w')
 			for i in range(0, len(timestamp_col)):
@@ -498,7 +506,7 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 			fdtemp.close()'''
 			fd.write(str(u[0])+','+str(float(secondLarge)/large)+','+str(selfInitGeo/infectCommunit)+','+str(numEdgesCrossing/numEdges)+','+str(exposureGA)+','+str(globalAdopters)+','+str(heavy)+','+str(float(numEdges)/len(nodes))+','+str(large)+','+str(numEdges)+',' + str(expose1)+','+str(expose2)+','+str(expose3)+','+str(expose4)+','+str(expose2d)+','+str(numTweets)+','+str(val)+','+str(len(nodes))+','+str(float(expose_num)/expose)+','+str(float(singleton)/len(nodes))+','+str(float(numOfSets)/len(nodes))+','+str(infectCommunit)+','+str(usagee)+','+str(numRT)+','+str(numMention)+','+str(val1)+','+str(val2)+','+str(usagee_tweets)+','+str(globalFollowerAdopters)+','+str(stdev(c_expose1))+','+str(stdev(c_expose2))+','+str(stdev(c_expose3))+','+str(stdev(c_expose4))+','+str(stdev(c_expose2d))+','+str(stdev(c_cond))+',' + str(expose1_ve)+','+str(expose2_ve)+','+str(expose3_ve)+','+str(expose4_ve)+','+str(expose2d_ve)+','+str(float(globalFollowerAdopters)/len(nodes))+','+str(stdev(c_expose1_ve))+','+str(stdev(c_expose2_ve))+','+str(stdev(c_expose3_ve))+','+str(stdev(c_expose4_ve))+','+str(stdev(c_expose2d_ve))+','+str(stdev(c_cond_ve))+',1\n')
 			
-			fd_cond.write(str(u[0])+','+','.join(str(x) for x in expose_col[-251:])+',1\n')
+			#fd_cond.write(str(u[0])+','+','.join(str(x) for x in expose_col[-251:])+',1\n')
 		else:
 			'''fdtemp = open('dumpnviral/'+u[0], 'w')
 			for i in range(0, len(timestamp_col)):
@@ -506,9 +514,9 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 			fdtemp.close()'''
 			fd.write(str(u[0])+','+str(float(secondLarge)/large)+','+str(selfInitGeo/infectCommunit)+','+str(numEdgesCrossing/numEdges)+','+str(exposureGA)+','+str(globalAdopters)+','+str(heavy)+','+str(float(numEdges)/len(nodes))+','+str(large)+','+str(numEdges)+',' + str(expose1)+','+str(expose2)+','+str(expose3)+','+str(expose4)+','+str(expose2d)+','+str(numTweets)+','+str(val)+','+str(len(nodes))+','+str(float(expose_num)/expose)+','+str(float(singleton)/len(nodes))+','+str(float(numOfSets)/len(nodes))+','+str(infectCommunit)+','+str(usagee)+','+str(numRT)+','+str(numMention)+','+str(val1)+','+str(val2)+','+str(usagee_tweets)+','+str(globalFollowerAdopters)+','+str(stdev(c_expose1))+','+str(stdev(c_expose2))+','+str(stdev(c_expose3))+','+str(stdev(c_expose4))+','+str(stdev(c_expose2d))+','+str(stdev(c_cond))+',' + str(expose1_ve)+','+str(expose2_ve)+','+str(expose3_ve)+','+str(expose4_ve)+','+str(expose2d_ve)+','+str(float(globalFollowerAdopters)/len(nodes))+','+str(stdev(c_expose1_ve))+','+str(stdev(c_expose2_ve))+','+str(stdev(c_expose3_ve))+','+str(stdev(c_expose4_ve))+','+str(stdev(c_expose2d_ve))+','+str(stdev(c_cond_ve))+',0\n')
 			
-			fd_cond.write(str(u[0])+','+','.join(str(x) for x in expose_col[-251:])+',0\n')
+			#fd_cond.write(str(u[0])+','+','.join(str(x) for x in expose_col[-251:])+',0\n')
 	fd.close()
-	fd_cond.close()
+	#fd_cond.close()
 	fr.close()
 	fr1.close()
 	fr2.close()

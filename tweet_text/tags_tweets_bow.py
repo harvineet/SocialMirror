@@ -3,7 +3,7 @@ import time
 import re
 import sys
 import os
-# from string import punctuation
+"""# from string import punctuation
 
 # tweet = tweet.replaceAll("\\s*RT\\s*@\\w+:\\s*","");//removes "RT @foobar:"
 # tweet = tweet.replaceAll("https?:[^\\s]*",""); //removes "http://foo" "https://bar"
@@ -37,10 +37,10 @@ def tweet_preprocess(tweet):
 		if word=='':
 			continue
 		tweet_norm = tweet_norm+ " " + word
-	return tweet_norm
+	return tweet_norm"""
 pred_thr = 1500
 tag_selected = dict()
-with open('../timeline_weng', 'r') as fr:
+with open('/twitterSimulations/timeline_data/timeline_weng', 'r') as fr:
 	for line in fr:
 		line = line.rstrip()
 		u = line.split(' ')
@@ -51,10 +51,12 @@ with open('../timeline_weng', 'r') as fr:
 		tag = u[0]
 		tag_selected[tag]=(timestamp,author)
 
-path_tweet_extracts = 'tweet_extracts'
-fd = open("tweets.txt","wb")
+path_tweet_extracts = 'tweet_text_check/'
+fd = open("tweets_present.txt","wb")
 tags_sel = dict()
 for tweet_folder in os.listdir(path_tweet_extracts):
+	if "tweets" not in tweet_folder:
+		continue
 	print "tweets folder", tweet_folder
 	path_txtfile = os.path.join(path_tweet_extracts,tweet_folder)
 	with open(path_txtfile, 'rb') as fr:
@@ -72,39 +74,30 @@ for tweet_folder in os.listdir(path_tweet_extracts):
 					tags_sel[tweet_tag] = [tweet_text]
 				# fd.write(tweet_preprocess(tweet_text)+"\n")
 				fd.write(tweet_text+"\n")
-				# if(tweet_time >= 1395858601	 and tweet_time <= 1398796199 and tweet_author in selected_users):
-						# tweet_tags = set([tag.strip("#") for tag in tweet_text.split() if tag.startswith("#")])
-						# for tag in tweet_tags:
-							# tags_org.add(tag) # remove if addition takes time
-							# tag=tag.lower()
-							# if tag in tag_selected:
-								# (thr_timestamp,_) = tag_selected[tag]
-								# if tweet_time<=thr_timestamp: #tweets before pred thr
-									# fd.write(tag+"\t"+tweet_text+"\t"+str(tweet_author)+"\t"+str(tweet_time)+"\n")
 			except Exception as e:
 				print e
 				# print line
 fd.close()
 
-# fd1 = open("tag_tweets_bow_lfrem.txt","wb")
-# for i in tags_sel:
-	# fd1.write(i+"\t"+" ".join(tags_sel[i])+"\n")
-# fd1.close()
+fd1 = open("tag_tweets_bow.txt","wb")
+for i in tags_sel:
+	fd1.write(i+"\t"+" ".join(tags_sel[i])+"\n")
+fd1.close()
 print len(tags_sel), len(tag_selected)
 for i in tag_selected:
 	if (i not in tags_sel):
 		print i
 
 "unique tags with capitalisation"
-# path_tag_extracts = 'tag_extracts'
-# tags_org = set()
-# for tag_folder in os.listdir(path_tag_extracts):
-	# print "tags folder", tag_folder
-	# path_txtfile = os.path.join(path_tag_extracts,tag_folder)
-	# with open(path_txtfile, 'r') as fr:
-		# for line in fr:
-			# line = line.rstrip()
-			# tags_org.add(line)
-# with open("tags_comb.txt","w") as fd_tag:
-	# for i in tags_org:
-		# fd_tag.write(i+"\n")
+"""path_tag_extracts = 'tag_extracts'
+tags_org = set()
+for tag_folder in os.listdir(path_tag_extracts):
+	print "tags folder", tag_folder
+	path_txtfile = os.path.join(path_tag_extracts,tag_folder)
+	with open(path_txtfile, 'r') as fr:
+		for line in fr:
+			line = line.rstrip()
+			tags_org.add(line)
+with open("tags_comb.txt","w") as fd_tag:
+	for i in tags_org:
+		fd_tag.write(i+"\n")"""

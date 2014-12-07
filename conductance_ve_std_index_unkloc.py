@@ -215,8 +215,8 @@ for pred_thr in [1500,250,500,1000,2000,2500]:#200,250,500,750,1000,
 	fr = open('timeline_data/timeline_weng', 'r')
 	fr1 = open('retweeteds_weng', 'r')
 	fr2 = open('user_mentions_weng', 'r')
-	fd=open("./conductance_std_features_td/cond_ve_features/feature_"+str(pred_thr)+".csv",'w')
-	fd_cond=open("./conductance_std_features_td/cond_ve_features/cond_values_all/feature_"+str(pred_thr)+".csv",'w')
+	fd=open("./conductance_std_features_td/cond_ve_features_unkloc/feature_"+str(pred_thr)+".csv",'w')
+	fd_cond=open("./conductance_std_features_td/cond_ve_features_unkloc/cond_values_all/feature_"+str(pred_thr)+".csv",'w')
 	fd.write("TagName,RatioSecondtoFirst,RatioSelfInitCommu,RatioCrossGeoEdges,#globalSelfInitAdoptersFollowers,#globalAdopters,#heavyusers,Density,LargestSize,NumEdges,Conduct1,Conduct2,Conduct3,Conduct4,Conduct2d,NumTweets,TimeFirst1000,NoOfAdopters,Conductance,RatioOfSingletons,RatioOfConnectedComponents,InfectedCommunities,UsageEntropy,NumOfRT,NumOfMention,IntraRT,IntraMen,UsageEntropyTweets,#globalAdoptersFollowers,Conduct1_std,Conduct2_std,Conduct3_std,Conduct4_std,Conduct2d_std,Conductance_std,Conduct1_ve,Conduct2_ve,Conduct3_ve,Conduct4_ve,Conduct2d_ve,Conductance_ve,Conduct1_vestd,Conduct2_vestd,Conduct3_vestd,Conduct4_vestd,Conduct2d_vestd,Conductance_vestd,Class\n")
 	if(pred_thr==200):
 		cond_values_all = ",".join(["Cond"+str(c) for c in reversed(range(200))])
