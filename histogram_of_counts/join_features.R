@@ -1,6 +1,7 @@
 library(data.table)
 
 dat<-fread("G:/socialnetworks_project_log/histogram_of_counts/feature_files/feature_exp_cond.csv")
+dat<-fread("G:/socialnetworks_project_log/pred_thresh_change/std/feature_1500_cond_std.csv")
 #seg<-fread("G:/socialnetworks_project_log/histogram_of_counts/tag_clusters/tag_clusters_1000_20.csv")
 #seg<-fread("G:/socialnetworks_project_log/histogram_of_counts/tag_spread.csv")
 
