@@ -1,6 +1,14 @@
 <html>
 <body>
 
+<h3>Counting flips in aggregated sentiment of consecutive tweets</h3>
+Groups of 50 consecutive tweets (also tried 10,25,100) on the topic are considered and overall sentiment is calculated using majority vote (assigning group of consecutive tweets the sentiment with the most number of tweets). Number of flips using this aggregated sentiment is added as a feature for classification.<br>
+AUC: 0.297<br>
+Also, giving more weight to flips between "positive" and "negative" sentiments didn't give significant improvement. On an average, non-viral hashtags have higher number of flips than viral hashtags. The pdf plot is:<br>
+<img src="plots/sentiment_flips.png" width="600" height="400" />
+
+<h4> 18 Jan </h4>
+
 <h3>Changes in sentiment of tweets on a particular topic</h3>
 The x-axis represents the number of tweets on the topic over time. Here, tweets with different sentiment labels are separated out vertically.<br>
 <a href="scatterplot.html">This link</a> contains the same plots but with jitter added in y-axis to separate out the closely-spaced points.<br>

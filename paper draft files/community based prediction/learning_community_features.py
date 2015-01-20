@@ -1,5 +1,5 @@
 # file to form training examples for Weng et al prediction model from virality2013/timeline_tag.anony.dat
-# assumption: timeline file has only "new" memes, i.e. those started in first two weeks, emergent hashtags not identified (no data), threshold on adopters is used for viral topics and over >50 tweets hashtags, 
+# assumption: only emergent hashtags (with <=20 tweets in Feb 2012) taken, threshold on adopters is used for viral topics and over >50 tweets hashtags, 
 # nodes neither in node_community_map nor in deleted_node i.e. not in follower_graph belong to non-english tweets, also viral topics are taken from percentile thresholding from all tags (excluding tags for which any of the early adopters are not in follower graph and for which total number of tweets are less than threshold),
 # intra-community communication features not checked for the interactions to occur in early tweets (only interacting user in early adopters is checked, not checked if the interaction occurs in early tweet by checking the timestamp of interaction), mention and retweet timeline files have multiple interactions between same users and for an acting user for a tag (not the first occurence only)
 # class label for viral topic is 1
@@ -13,11 +13,12 @@ follow_fname = "virality2013/follower_gcc.anony.dat"
 topic_fname = 'virality2013/timeline_tag.anony.dat'
 men_fname = 'virality2013/timeline_tag_men.anony.dat'
 rt_fname = 'virality2013/timeline_tag_rt.anony.dat'
+prev_month_fname = 'tag_tweet_count_201202.csv'
 
 viral_threshold = .10
 early_tweet_threshold = 50
-first_day_time = 1333065600 #1332633600  
-first_day_threshold = 3
+# first_day_time = 1333065600 #1332633600
+# first_day_threshold = 3
 two_week_timestamp = 1333756800
 
 count = 0
@@ -26,11 +27,12 @@ hashtag_men = defaultdict(lambda: [])
 hashtag_rt = defaultdict(lambda: [])
 hashtag_A = dict()
 topic_count_list = []
+emergent = set()
 
 node_community_map, deleted_nodes = get_community_map(cluster_follow_fname)
 adj_list = get_adj_list(follow_fname)
 print "adj_list"
-learning_fname = 'learning_community.csv'
+learning_fname = 'learning_community_check.csv'
 non_network_hashtag_num = 0
 class BreakIt(Exception): pass
 
@@ -71,6 +73,13 @@ with open(men_fname) as f1, open(rt_fname) as f2:
 			continue
 print "men_rt"
 
+with open(prev_month_fname) as fprev:
+	next(fprev)
+	for line in fprev:
+		line=line.rstrip().split(',')
+		if int(line[1])<=20:
+			emergent.add(line[0])
+			
 with open(topic_fname) as f:
 	for line in f:
 		try:
@@ -78,6 +87,8 @@ with open(topic_fname) as f:
 			topic_info = line.split(' ')
 			hashtag_name = topic_info[0]
 			time_user = topic_info[1:] 
+			if hashtag_name not in emergent:
+				raise BreakIt
 			if len(time_user) < early_tweet_threshold:
 				raise BreakIt
 			timestamp_hashtag = []
@@ -92,13 +103,13 @@ with open(topic_fname) as f:
 			
 			# hashtag_T[hashtag_name] = timestamp_hashtag
 			first_tweet_time = int(timestamp_hashtag[0])
-			first_day_tweet_count = 0
-			for tw_time in timestamp_hashtag:
-				if int(tw_time) <= first_day_time:
-					first_day_tweet_count += 1
-				else:
-					break
-			if first_tweet_time > two_week_timestamp or first_day_tweet_count > first_day_threshold:
+			# first_day_tweet_count = 0
+			# for tw_time in timestamp_hashtag:
+				# if int(tw_time) <= first_day_time:
+					# first_day_tweet_count += 1
+				# else:
+					# break
+			if first_tweet_time > two_week_timestamp: #or first_day_tweet_count > first_day_threshold:
 				raise BreakIt
 
 			# computing all but last feature

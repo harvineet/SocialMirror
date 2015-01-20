@@ -4,6 +4,7 @@ dat<-fread("G:/socialnetworks_project_log/histogram_of_counts/feature_files/feat
 dat<-fread("G:/socialnetworks_project_log/pred_thresh_change/std/feature_1500_cond_std.csv")
 #seg<-fread("G:/socialnetworks_project_log/histogram_of_counts/tag_clusters/tag_clusters_1000_20.csv")
 #seg<-fread("G:/socialnetworks_project_log/histogram_of_counts/tag_spread.csv")
+seg<-fread("G:/socialnetworks_project_log/tweet sentiment/sentiment_feature.csv")
 
 seg<-fread("G:/socialnetworks_project_log/spectral_clustering/tag_clusters_loc_rbf_10.csv")
 
@@ -14,6 +15,7 @@ all(dat$TagName==seg$TagName)
 #all(dat$TagName==hist$TagName)
 
 df <- cbind(subset(dat, select = c(2:10,48:52,17,18,53,20:22,24:28,55,58)),subset(seg, select = c(3:ncol(seg))),subset(dat, select = c(60)))
+df <- cbind(subset(dat, select = c(1:27)),subset(seg, select = c(6)),subset(dat, select = c(28)))
 
 #train<- df[df$TrainExample==1,]
 #test<- df[df$TrainExample==0,]
@@ -30,3 +32,4 @@ df <- cbind(subset(dat, select = c(2:10,48:52,17,18,53,20:22,24:28,55,58)),subse
 
 write.csv(file="G:/socialnetworks_project_log/spectral_clustering/feature_clusters_loc_rbf_10.csv",df,row.names=F)
 #write.csv(file="G:/socialnetworks_project_log/histogram_of_counts/feature_word_spread.csv",df,row.names=F)
+write.csv(file="G:/socialnetworks_project_log/tweet sentiment/feature_senti_flips.csv",df,row.names=F)
