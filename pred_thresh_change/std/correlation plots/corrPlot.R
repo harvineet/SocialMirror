@@ -5,7 +5,7 @@ library(reshape2)
 
 tag_files<-list.files(path="G:/socialnetworks_project_log/conductance_std_features_td/cond_ve_features/feature_files", full.names = TRUE)
 mainDir<-"G:/socialnetworks_project_log/spectral_clustering/"
-feature_name <- c("RatioSecondtoFirst", "RatioSelfInitComm","RatioCrossGeoEdges","SelfInitAdoptersFollowers","SelfInitAdopters","HeavyUsers","Density","LargestSize", "NumOfEdges","Conduct'_20","Conduct'_50","Conduct'_100","Conduct'_250","Conduct''","TimeTakenToPredThr","NumOfAdopters","CummConductance","RatioOfSingletons","RatioOfConnectedComponents","InfectedGeo","NumOfRT","NumOfMention","IntraGeoRT","IntraGeoMention","UsageEntropyTweets","Conduct'_stdev","Conduct''_stdev","Class")
+feature_name <- c("RatioSecondtoFirst", "RatioSelfInitComm","RatioCrossGeoEdges","SelfInitAdoptersFollowers","SelfInitAdopters","HeavyUsers","Density","LargestSize", "NumOfEdges","Conduct'_20","Conduct'_50","Conduct'_100","Conduct'_250","Conduct''","TimeTakenToPredThr","NumOfAdopters","CummConductance","RatioOfSingletons","RatioOfConnectedComponents","InfectedGeo","NumOfRT","NumOfMention","IntraGeoRT","IntraGeoMention","TweetingEntropy","Conduct'_stdev","Conduct''_stdev","Class")
 dat_comb<-data.frame()
 totalspread<-fread("G:/socialnetworks_project_log/spectral_clustering/tag_freq_5000.csv")
 totalspread$logspread<-log10(totalspread$count)
@@ -29,13 +29,18 @@ for (tag in tag_files[1:length(tag_files)])
   dat <- subset(df, select = c(2:15,17:22,24:28,31,34,48))
   dat[,ncol(dat)]<-as.factor(dat[,ncol(dat)])
   logspread<-totalspread[totalspread$tag %in% df$TagName,]$logspread
+  nsamp<-nrow(dat)
   for(i in 1:(ncol(dat)-1)) #c(8,14,27,19,23,25,16,10)
   {
-    corr_test<-cor.test(dat[,i], logspread)
-    #corr_test<-cor.test(dat[,i], logspread, method="spearman")
-    corr_ci<-corr_test$conf.int
-    corr_low[,i+1]<-corr_ci[1]
-    corr_high[,i+1]<-corr_ci[2]
+    corr_test<-cor.test(dat[,i], logspread, method = c("spearman"))
+    #corr_test<-cor.test(dat[,i], logspread)
+    #corr_ci<-corr_test$conf.int
+    #corr_low[,i+1]<-corr_ci[1]
+    #corr_high[,i+1]<-corr_ci[2]
+       
+    corr_low[,i+1]<-tanh(atanh(corr_test$estimate)-1.03/(nsamp-3)^(1/2))
+    corr_high[,i+1]<-tanh(atanh(corr_test$estimate)+1.03/(nsamp-3)^(1/2))
+
     colnames(corr_low)[i+1]<-feature_name[i]
     colnames(corr_high)[i+1]<-feature_name[i]
     corr[,i+1]<-corr_test$estimate

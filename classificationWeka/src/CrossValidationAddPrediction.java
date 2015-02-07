@@ -82,19 +82,19 @@ public class CrossValidationAddPrediction {
     System.out.println("Time taken: " + (endTime - startTime) + " milliseconds");
     
     // classifier
-    String[] tmpOptions;
+    /*String[] tmpOptions;
     String classname;
     tmpOptions     = Utils.splitOptions(Utils.getOption("W", args));
     classname      = tmpOptions[0];
     tmpOptions[0]  = "";
-    AbstractClassifier cls = (AbstractClassifier) Utils.forName(AbstractClassifier.class, classname, tmpOptions);
+    AbstractClassifier cls = (AbstractClassifier) Utils.forName(AbstractClassifier.class, classname, tmpOptions);*/
     
-    /*String[] classifierOptions = new String[2];
+    String[] classifierOptions = new String[2];
     classifierOptions[0] = "-I";       
     classifierOptions[1] = "500"; 
     RandomForest rf = new RandomForest();         
     rf.setOptions(classifierOptions);     // set the options
-    Classifier cls = rf;*/
+    AbstractClassifier cls = rf;
 
     // other options
     int seed  = Integer.parseInt(Utils.getOption("s", args));
@@ -124,7 +124,14 @@ public class CrossValidationAddPrediction {
       // build and evaluate classifier
 
       //AbstractClassifier clsCopy = (AbstractClassifier) Utils.forName(AbstractClassifier.class, classname, tmpOptions);
-      AbstractClassifier clsCopy = (AbstractClassifier) AbstractClassifier.makeCopy(cls);
+      
+      //AbstractClassifier clsCopy = (AbstractClassifier) AbstractClassifier.makeCopy(cls);
+      String[] classifierOptions1 = new String[2];
+      classifierOptions1[0] = "-I";       
+      classifierOptions1[1] = "500"; 
+      RandomForest rf1 = new RandomForest();         
+      rf1.setOptions(classifierOptions1);     // set the options
+      AbstractClassifier clsCopy = rf1;
       clsCopy.buildClassifier(train);
       eval.evaluateModel(clsCopy, test);
       
@@ -165,7 +172,7 @@ public class CrossValidationAddPrediction {
     //DataSink.write(Utils.getOption("o", args), predictedData);
   }
   public static void main(String[] args) throws Exception{
-		File dir = new File("data/arff");
+		File dir = new File("data/csv");
 		File[] directoryListing = dir.listFiles();
 		for (File child : directoryListing) {
 			System.out.println(child);
