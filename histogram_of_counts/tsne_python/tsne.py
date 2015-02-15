@@ -11,8 +11,6 @@
 #  Copyright (c) 2008 Tilburg University. All rights reserved.
 
 import numpy as Math
-import matplotlib
-matplotlib.use('Agg')
 import pylab as Plot
 	
 def Hbeta(D = Math.array([]), beta = 1.0):

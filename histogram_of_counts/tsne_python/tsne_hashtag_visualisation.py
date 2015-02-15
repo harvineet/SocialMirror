@@ -1,8 +1,12 @@
 #visualising top 100 most, least and mid frequent hashtags using t-SNE on histogram-of-counts vectors from word classes
 
+import matplotlib
+matplotlib.use('Agg')
 from tsne import *
 from numpy import array
 import math, random
+import cPickle as pickle
+from collections import Counter
 
 path_class_file = '/mnt/filer01/word2vec/twitter_vectors_classes.sorted.txt'
 word_to_cluster = dict()
@@ -45,14 +49,16 @@ hist_feature = []
 for tag_words in tag_bow:
 	tag_feature = [0]*word_clusters_dim
 	num_words = 0
+	# word_term_freq = Counter(tag_words)
 	for word in tag_words:
 		try: #words from tag bow missing in word vector, may be because of min limit on word occurrence 5
-			# cluster_id = idx[labels.index(word)] # cluster index from 0, and order of idx and labels same
 			cluster_id = word_to_cluster[word] # cluster index from 0, and order of idx and labels same
 			df = word_doc_freq[word] #document frequency of words from vocab file
 			idf = math.log10(float(num_tags)/df)
-			tag_feature[cluster_id]+=1*idf #using df as word relevance
-			num_words+=1
+			# if word=='dconcert': # count for cluster with 'dconcert' very high, causing nan value error in tsne P-value calculation
+				# continue
+			tag_feature[cluster_id]+=1*idf #using idf as word relevance
+			num_words+=1*idf
 		except:
 			word_not_found.add(word)
 	#normalise by total number of words
@@ -61,7 +67,8 @@ for tag_words in tag_bow:
 		print "error, tag with no words"
 		num_words = 0.1
 	hist_feature.append([float(x)/num_words for x in tag_feature])
-
+# with open('hashtag_vec_tfidf.pickle', 'wb') as fd:
+	# pickle.dump(hist_feature,fd)
 print len(word_doc_freq), len(word_not_found)
 tag_freq = []
 with open('tag_freq_1500.csv', 'rb') as fr:
@@ -76,7 +83,7 @@ tag_freq_sorted = [t for t,_ in sorted(tag_freq,key=lambda x: x[1], reverse = Tr
 most_freq = set(tag_freq_sorted[0:150])
 least_freq = set(tag_freq_sorted[-150:])
 half_num_words = int(len(tag_freq_sorted)/2.0)
-mid_freq = set(tag_freq_sorted[half_num_words-50:half_num_words+49])
+mid_freq = set(tag_freq_sorted[half_num_words-75:half_num_words+74])
 all_random = set(random.sample(tag_freq_sorted,150))
 
 #set visibility of most, least and mid frequency hashtags by setting text size
@@ -93,7 +100,7 @@ def get_tag_size_label(tlist):
 	return size, array(label)
 
 X = array(hist_feature)
-Y = tsne(X, 2, word_clusters_dim, 20.0);
+Y = tsne(X, 2, 50, 30.0);
 
 def save_embed_plot((tag_sizes,labels),fname):
 	fig = Plot.figure()
@@ -101,7 +108,7 @@ def save_embed_plot((tag_sizes,labels),fname):
 	for label, x, y, s in zip(labels, Y[:,0], Y[:,1], tag_sizes):
 		Plot.annotate(label, xy = (x, y), xytext = (0, 0), textcoords = 'offset points', size=s)
 	Plot.axis('off')
-	fig.savefig(fname, dpi=1200, bbox_inches='tight')
+	fig.savefig(fname, dpi=800, bbox_inches='tight')
 	
 if __name__ == "__main__":
 	print "Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset."

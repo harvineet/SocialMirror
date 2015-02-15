@@ -8,6 +8,7 @@ hashtag_segment/gensim-0.10.2/
 glove/glove/
 tweets_repository/Nov2013/tokenizer/
 histogram_of_counts/kmeans/
+histogram_of_counts/tsne_python/textSNE-master/
 !*.py
 !/*.py
 !*.bat
