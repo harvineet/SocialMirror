@@ -5,7 +5,8 @@ import time
 import sys
 import os
 import cPickle as pickle
-	
+import random
+
 
 m = dict()
 fr = open("/twitterSimulations/graph/map.txt")
@@ -30,7 +31,7 @@ with open('/twitterSimulations/timeline_data/dif_timeline1s', 'r') as fr:
 			num_tweets_per_tag[tag]=0
 		num_tweets_per_tag[tag]+=1
 print len(tags_for_user)
-
+	
 selected_users = set()
 with open("userSubset.csv","r") as fr:
 	for line in fr:
@@ -38,7 +39,7 @@ with open("userSubset.csv","r") as fr:
 		u = line.split(',')
 		id,_,_ = int(u[0]),int(u[1]),int(u[2])
 		selected_users.add(id)
-		
+
 #subset follower and friend adjacency list
 """
 arr = ["user_followers_bigger_graph.txt","user_followers_bigger_graph_2.txt", "user_followers_bigger_graph_i.txt","user_followers_bigger_graph_recrawl_2.txt", "user_followers_bigger_graph_recrawl_3.txt","user_followers_bigger_graph_recrawl.txt"]
@@ -143,7 +144,7 @@ def get_intersection(list1,list2):
 num_common_friends = dict()
 count=0
 num_common_friends_thr = dict()
-selected_users_list = list(selected_users)
+selected_users_list = random.sample(selected_users,500)
 for i in range(0,len(selected_users_list)):
 	count+=1
 	if count%1000==0:
@@ -151,8 +152,11 @@ for i in range(0,len(selected_users_list)):
 	node = selected_users_list[i]
 	adj_nodes = friend[node]
 	thr = .20*len(adj_nodes)
-	for j in range(i+1,len(selected_users_list)):
-		snode = selected_users_list[j]
+	
+	# for j in range(i+1,len(selected_users_list)):
+		# snode = selected_users_list[j]
+	for snode in selected_users:
+		
 		nbh_adj_nodes = friend[snode]
 		thr_s = .20*len(nbh_adj_nodes)
 		common = get_intersection(adj_nodes, nbh_adj_nodes)
@@ -160,10 +164,10 @@ for i in range(0,len(selected_users_list)):
 			if node not in num_common_friends_thr:
 				num_common_friends_thr[node]=0
 			num_common_friends_thr[node]+=1
-		if common>=thr_s:
-			if snode not in num_common_friends_thr:
-				num_common_friends_thr[snode]=0
-			num_common_friends_thr[snode]+=1
+		# if common>=thr_s:
+			# if snode not in num_common_friends_thr:
+				# num_common_friends_thr[snode]=0
+			# num_common_friends_thr[snode]+=1
 pickle.dump( num_common_friends_thr, open( "num_common_friends_thr_test.pickle", "wb" ) )
 
 
@@ -173,5 +177,6 @@ for node in selected_users:
 	num_tweets_with_same_tags[node] = sum([num_tweets_per_tag[x] for x in tags_for_user[node]])
 	
 with open("featuresUserSubset_test.csv","w") as fd:
-	for i in selected_users:
+	for i in selected_users_list:
 		fd.write(str(i)+","+str(num_common_friends_thr[i])+","+str(num_rec[i])+","+str(num_tweets_with_same_tags[i])+"\n")
+		

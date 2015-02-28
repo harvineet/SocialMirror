@@ -141,7 +141,7 @@ for node in selected_users:
 		out_nodes = follower[node]
 	except:
 		continue
-	num_out = min(len(out_nodes),10000)#len(out_nodes)
+	num_out = len(out_nodes)#len(out_nodes)
 	for i in range(0,num_out):
 		out = out_nodes[i]
 		for j in range(i+1,num_out):

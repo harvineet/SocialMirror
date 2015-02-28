@@ -1,8 +1,20 @@
 <html>
 <body>
 
+<h3>Checking sparsity of contexts for learning node representations</h3>
+Filtering users: Taking the median values for number of followees and number of tweets, filtered users such that, number of followees > 200 and number of tweets > 15. This resulted in a set of 1,001,525 users (so the vocabulary size for node vector training will be 1M).</br>
+For this set of users, considering two ways of generating context:</br>
+number of users with reciprocal links, i.e. for each user how many users have follower-following links to it, and</br>
+number of tweets on same hashtags, i.e. number of tweets on the hashtags used by a user</br>
+The distribution plots are (log scale in x-axis):</br>
+<img src="plots/reciprocal_links.png" width="600" height="400" />
+<img src="plots/same_tweets.png" width="600" height="400" />
+ 
+<h4> 16 Feb </h4>
+
 <a href="sentiment classification of tweets.pdf">Link</a> to ppt on approach taken in Sentiment140 for sentiment classification of tweets. <br>
-Visualisation of hashtag histogram-of-count vectors using <a href="http://lvdmaaten.github.io/tsne/">t-SNE</a> and tf-idf measure in vectors for word relevance. <br> <a href="https://github.com/turian/textSNE">Reference</a>
+<h3>Visualisation of hashtag vectors</h3>
+Visualisation of hashtag histogram-of-count vectors using <a href="http://lvdmaaten.github.io/tsne/">t-SNE</a> and tf-idf measure in vectors for word relevance (top 150 hashtags by number of tweets are plotted). Reference <a href="https://github.com/turian/textSNE">textSNE</a><br>
 <img src="plots/test-output.rendered_mostfreq.png" width="1200" height="800" />
 
 <h4> 10 Feb </h4>

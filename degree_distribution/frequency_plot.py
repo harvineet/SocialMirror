@@ -19,8 +19,10 @@ num_bin = 100000
 def freq_plot(data,xlab):
 	values, base = np.histogram(data, bins=num_bin)
 	cumulative = np.cumsum(values)
+	plt.plot(base[:-1], values, c='red') #frequency
 	# plt.plot(base[:-1], cumulative/float(len(data)), c='red') #normalised
-	plt.plot(base[:-1], len(data)-cumulative, c='red') #inverse
+	# plt.plot(base[:-1], len(data)-cumulative, c='red') #inverse, greater than
+	# plt.plot(base[:-1], len(data)-np.append(0,cumulative)[:-1], c='red') #inverse, greater than or equal to
 	# plt.yscale('log')
 	plt.xscale('log')
 	plt.xlabel(xlab)
