@@ -1,9 +1,10 @@
 #extract hashtag graphs from sequence of authors adopting a hashtag and find all paths in the graphs to write into corpus file as sentences for training using word2vec 
-import time
+import datetime
 import sys
 import os
 import cPickle as pickle
 import random
+from collections import defaultdict
 
 min_tweets_sequence = 100000 # minimum number of tweets on a hashtag to remove hashtags with only few tweets available for extracting context
 
@@ -27,9 +28,11 @@ fr.close()
 print 'Map Read\n'
 
 #read adoption sequence from dif_timeline1s file
-# adoption_sequence = pickle.load(open("hashtagAdoptionSequences_workingset.pickle","rb"))
-
-
+adoption_sequence = pickle.load(open("hashtagAdoptionSequences_workingset.pickle","rb"))
+"""
+# prev = ""
+# count = 0
+# rem=dict()
 adoption_sequence = dict() # count 4103630, ff has 1081979 tweets, adj. list problem
 with open('/twitterSimulations/timeline_data/dif_timeline1s', 'r') as fr:
 	for line in fr:
@@ -38,12 +41,29 @@ with open('/twitterSimulations/timeline_data/dif_timeline1s', 'r') as fr:
 		tag = u[0]
 		time = int(u[1])
 		author = m[int(u[2])]
+		
+		#remove non-emergent hashtags, about 70800 removed, 8793155 remaining out of 8863950 hashtags in dif_timeline1s
+		# if tag != prev and prev != "":
+			# if(count >= 5):
+				# rem[prev] = len(adoption_sequence[prev])
+				# del adoption_sequence[prev]
+			# count = 0
+		# if time < 1395901801: # less than 5 tweets in 12 hours from 1395858601
+			# count = count + 1
+		# prev = tag
+		
 		try:
 			adoption_sequence[tag].append((time,author))
 		except KeyError:
 			adoption_sequence[tag]=[(time,author)]
-print len(adoption_sequence)
- 
+
+# if(count >= 5):
+	# rem[prev] = len(adoption_sequence[prev])
+	# del adoption_sequence[prev]
+				
+print len(adoption_sequence)#, len(rem)
+# pickle.dump(rem,open('nonEmergentHashtags.pickle','wb'))
+"""
 print "timeline file read"
 #location information files
 #can use location combined by country in known_locations_country_us and known_locations1_country_us files
@@ -140,11 +160,11 @@ def get_adoption_segments(sequence):
 def get_hashtag_graph_adj(segment):
 	num_nodes = len(segment)
 	# adj_list = init_adj_list(num_nodes) #adjacency list for directed graph
-	adj_list = [[] for i in xrange(0, num_nodes)]
-	rev_adj_list = [[] for i in xrange(0, num_nodes)]
+	adj_list = defaultdict(list)
+	rev_adj_list = defaultdict(list)
 	print "adj list init"
 	if num_nodes==1:
-		return adj_list
+		return adj_list, rev_adj_list
 	location = dict()
 	for i in xrange(0,num_nodes):
 		_,author = segment[i]
@@ -199,7 +219,7 @@ def get_hashtag_graph_adj(segment):
 	return adj_list, rev_adj_list
 """	
 #get all paths or sample of paths of length, m (same as or double of context length) from hashtag graph
-def get_paths_from_graph(nodes, adj):
+def get_paths_from_graph(nodes, adj, rev_adj):
 	paths = []
 	if len(nodes)<min_context_length: #only if less than m length paths are not taken
 		return []
@@ -268,20 +288,23 @@ for t in adoption_sequence:
 		print "not time ordered", t #yes
 """
 #write adoption sequence to file
-
-with open("hashtagAdoptionSequences_workingset.pickle","wb") as fd:
+"""
+with open('hashtagAdoptionSequences_workingset.pickle','wb') as fd:
 	for tag in adoption_sequence.keys():
 		if len(adoption_sequence[tag])<min_tweets_sequence:
 			del adoption_sequence[tag]
 			# fd.write(" ".join(adoption_sequence[tag])+"\n") #author is of type str for using join
 	pickle.dump(adoption_sequence,fd)
-
+"""
 #write sentences to file
+get_sentences(adoption_sequence)
 """
 with open("hashtagAdoptionSentences.txt","wb") as fd:
+	start_time = datetime.datetime.now()
 	sentences = get_sentences(adoption_sequence)
 	for s in sentences:
 		# fd.write(" ".join(s)+"\n")
 		# print "Path length", len(s)
 		_=len(s)
+	print start_time, datetime.datetime.now()
 """
