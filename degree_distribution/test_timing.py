@@ -7,18 +7,19 @@ import random
 from collections import defaultdict
 # from recursive_getsizeof import total_size
 
-min_tweets_sequence = 100000 # minimum number of tweets on a hashtag to remove hashtags with only few tweets available for extracting context
+min_tweets_sequence = 2 # minimum number of tweets on a hashtag to remove hashtags with only few tweets available for extracting context
 
 #conditions for edges between tweets
 time_diff_for_edge = 12*60*60
-# time_diff_for_edge = 12*60*60
 follower_following_cond = False
 geography_cond = False
 
-context_length = 5 #m/2, length of context (to one side) or length of paths (half of the length) to consider
-min_context_length = 0 #minimum length of context or length of paths to consider
+context_length = 5 #m/2, length of context (to one side) or length of paths (half of the length) to consider, excluding present vertex
+min_context_length = 2 #minimum length of context or length of paths to consider
+gamma = 1 #number of contexts or paths for a tweet in a sequence
 
 #read index of each user out of 7697889 users from map file
+"""
 m = dict()
 fr = open("/twitterSimulations/graph/map.txt")
 for line in fr:
@@ -27,14 +28,14 @@ for line in fr:
 	m[int(u[0])] = int(u[1])
 fr.close()
 print 'Map Read'
-
+"""
 #read adoption sequence from dif_timeline1s file
 adoption_sequence = pickle.load(open("hashtagAdoptionSequences_workingset.pickle","rb"))
 """
 # prev = ""
 # count = 0
 # rem=dict()
-adoption_sequence = dict() # count 4103630, ff has 1081979 tweets, adj. list problem
+adoption_sequence = dict()
 with open('/twitterSimulations/timeline_data/dif_timeline1s', 'r') as fr:
 	for line in fr:
 		line = line.rstrip()
@@ -68,6 +69,7 @@ print len(adoption_sequence)#, len(rem)
 print "timeline file read"
 #location information files
 #can use location combined by country in known_locations_country_us and known_locations1_country_us files
+max_locations = 141 #change number of unique locations to 97 for country_us files
 location_buckets = [-1] * 7697889
 # location_buckets = dict() #map to -1 for users not in location files
 fr = open('/twitterSimulations/known_locations.txt', 'r')
@@ -116,19 +118,52 @@ def dfs_paths(adj,start):
 	return paths
 
 #sample paths to the right of vertex from hashtag graph
-def sample_paths_one_side(adj,start):
+def sample_paths_one_side(adj,present_node):
 	paths = []
-	count=0
+	for i in xrange(0,gamma):
+		path=[present_node]
+		count=0
+		while count<context_length: #change context length value for single side
+			adjacent_nodes = adj[present_node]
+			if adjacent_nodes!=[]:
+				present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				path.append(present_node)
+				count+=1
+			else:
+				break
+		paths.append(path)
+	return paths
+	
+#sample paths to left and right of vertex from hashtag graph
+def sample_paths_both_side(adj,rev_adj,start):
+	paths = []
 	present_node = start
-	paths.append(present_node)
-	while count<context_length: #change context length value for single side
-		adjacent_nodes = adj[present_node]
-		if adjacent_nodes!=[]:
-			present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
-			paths.append(present_node)
-			count+=1
-		else:
-			break
+	for i in xrange(0,gamma):
+		#left
+		path=[]
+		count=0
+		while count<context_length: #change context length value for single side
+			adjacent_nodes = rev_adj[present_node]
+			if adjacent_nodes!=[]:
+				present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				path.append(present_node)
+				count+=1
+			else:
+				break
+		path.reverse()
+		path.append(start)
+		#right
+		count=0
+		present_node = start
+		while count<context_length: #change context length value for single side
+			adjacent_nodes = adj[present_node]
+			if adjacent_nodes!=[]:
+				present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				path.append(present_node)
+				count+=1
+			else:
+				break
+		paths.append(path)
 	return paths
 	
 #get user ids from vertex ids in paths
@@ -163,26 +198,22 @@ def get_hashtag_graph_adj(segment):
 	# adj_list = init_adj_list(num_nodes) #adjacency list for directed graph
 	adj_list = [[] for i in xrange(0, num_nodes)]
 	rev_adj_list = [[] for i in xrange(0, num_nodes)] #defaultdict(list)
-	print "adj list init"
+	# print "init", total_size(adj_list), total_size(rev_adj_list)
+	# print "adj list init"
 	if num_nodes==1:
 		return adj_list, rev_adj_list
-	location = dict()
+	location = [[] for i in xrange(0, max_locations)] #dict()
 	for i in xrange(0,num_nodes):
 		_,author = segment[i]
 		author_loc = location_buckets[author]
-		try:
+		if author_loc!=-1: #no edges between users with unknown location
 			location[author_loc].append(i) #time sorted order will change across locations, but not within location. order of vertices in adjacency list is still same
-		except KeyError:
-			location[author_loc]=[i]
-	print "location dict"
+	# print "location list"
 	count=0
-	for loc in location:
-		if loc==-1:
-			continue #no edges between users with unknown location
-		same_loc_seq = location[loc]
+	for same_loc_seq in location:
 		num_loc = len(same_loc_seq)
+		# print count, "Count", len(same_loc_seq)
 		count+=1
-		# print loc, "Count", len(same_loc_seq)
 		for i in xrange(0,num_loc):
 			vertex_index_first = same_loc_seq[i]
 			time_first,_ = segment[vertex_index_first]
@@ -197,8 +228,8 @@ def get_hashtag_graph_adj(segment):
 					break #tweets are arranged in increasing time, so no edges will be there with vertices past present node
 				#follower relation
 				#check if more than one connected components in a segment if single path is considered for each segment
-	print "assigned", total_size(adj_list), total_size(rev_adj_list)
-	
+	# print "assigned", total_size(adj_list), total_size(rev_adj_list)
+
 	return adj_list, rev_adj_list
 """
 def get_hashtag_graph_adj(segment):
@@ -224,39 +255,40 @@ def get_hashtag_graph_adj(segment):
 """	
 #get all paths or sample of paths of length, m (same as or double of context length) from hashtag graph
 def get_paths_from_graph(nodes, adj, rev_adj):
-	paths = []
-	if len(nodes)<min_context_length: #only if less than m length paths are not taken
-		return []
-	
-	for start in xrange(0,len(nodes)):
-		# if len(nodes)-start-1<min_context_length: #number of vertices left are less than min context length
-			# break
+	# paths = []
+	if len(nodes)>=min_context_length: #only if less than m length paths are not taken
+		# return []
+		for start in xrange(0,len(nodes)):
+			# if len(nodes)-start-1<min_context_length: #number of vertices left are less than min context length
+				# break
+				
+			#DFS for paths starting from a vertex
+			# paths_vertices = dfs_paths(adj,start)
 			
-		#DFS for paths starting from a vertex
-		# paths_vertices = dfs_paths(adj,start)
-		
-		#sample paths from right of all nodes
-		paths_vertices = sample_paths_one_side(adj,start)
-		
-		#sample paths from left and right of all nodes
-		# paths_vertices = sample_paths_one_side(rev_adj,start)
-		# paths_vertices += sample_paths_one_side(adj,start)
-		
-		for p in paths_vertices:
-			if len(p)>=min_context_length: #only take paths above minimum context length
-				paths.append(path_to_sentence(nodes,p))
-	return paths
+			#sample paths from right of all nodes
+			# paths_vertices = sample_paths_one_side(adj,start)
+			
+			#sample paths from left and right of all nodes
+			paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
+			
+			for p in paths_vertices:
+				if len(p)>=min_context_length: #only take paths above minimum context length
+					# paths.append(path_to_sentence(nodes,p))
+					yield path_to_sentence(nodes,p)
+	# return paths
 
 #get sentences from hashtag sequences
-tag_count = 0
 def get_sentences(adoption_sequence):
-	global tag_count
+	tag_count = 0
 	for t in adoption_sequence:
-		seq=adoption_sequence[t]
-		
-		tag_count+=1 #print number of hashtags processed
-		# if tag_count%100==0:
-		print "Hashtag count", tag_count, "Hashtag", t, "tweets", len(seq)
+		if t=='ff': # count 4103630, ff has 1081979 tweets, adj. list problem
+			continue
+		segment=adoption_sequence[t]
+
+		#print number of the hashtag being processed
+		tag_count+=1
+		if tag_count%1000==0:
+			print "Hashtag count", tag_count, "Hashtag", t#, "tweets", len(segment)
 		
 		"""
 		segments = get_adoption_segments(seq)
@@ -266,15 +298,19 @@ def get_sentences(adoption_sequence):
 			for p in paths: #change if only one path generated from a hashtag graph
 				yield p 
 		"""
-		hashtag_graph_adj, hashtag_graph_adj_rev = get_hashtag_graph_adj(seq)
-		print "Adjacency list formed"
-		if tag_count>2:
-			break
-		# paths = get_paths_from_graph(seq, hashtag_graph_adj, hashtag_graph_adj_rev)
+		adj_list, rev_adj_list = get_hashtag_graph_adj(segment)
+		# print "Adjacency list formed"
+		paths = get_paths_from_graph(segment, adj_list, rev_adj_list)
 		# print "Paths formed"
-		# for p in paths: #change if only one path generated from a hashtag graph
-			# yield p 
-
+		
+		del adj_list #memory not freed after function return
+		del rev_adj_list
+		
+		# if tag_count>2:
+			# break
+		for p in paths: #change if only one path generated from a hashtag graph
+			yield p 
+			
 #check how many users from dif_timeline1s are not mapped to any location
 """
 not_found=0
@@ -293,24 +329,30 @@ for t in adoption_sequence:
 	if seq!=time_sorted:
 		print "not time ordered", t #yes
 """
-#write adoption sequence to file
-"""
-with open('hashtagAdoptionSequences_workingset.pickle','wb') as fd:
+#write adoption sequence to file, from dif_timeline1s file remove hashtags with number of tweets less than min_tweets_sequence and map users to indices
+
+with open('hashtagAdoptionSequences.txt','wb') as fd:
 	for tag in adoption_sequence.keys():
-		if len(adoption_sequence[tag])<min_tweets_sequence:
-			del adoption_sequence[tag]
-			# fd.write(" ".join(adoption_sequence[tag])+"\n") #author is of type str for using join
-	pickle.dump(adoption_sequence,fd)
-"""
+		if len(adoption_sequence[tag])>=min_tweets_sequence:
+			# del adoption_sequence[tag]
+			fd.write(tag)
+			for t,a in adoption_sequence[tag]:
+				fd.write(' '+str(t)+','+str(a)) #author is of type str for using join
+			fd.write('\n')
+	# pickle.dump(adoption_sequence,fd)
+
 #write sentences to file
-get_sentences(adoption_sequence)
+# get_sentences(adoption_sequence)
 """
+count=defaultdict(int)
 with open("hashtagAdoptionSentences.txt","wb") as fd:
 	start_time = datetime.datetime.now()
 	sentences = get_sentences(adoption_sequence)
 	for s in sentences:
-		# fd.write(" ".join(s)+"\n")
+		fd.write(" ".join(s)+"\n")
+		count[len(s)]+=1
 		# print "Path length", len(s)
-		_=len(s)
+		# _=len(s)
 	print start_time, datetime.datetime.now()
+pickle.dump(count,open("frequencyContextLength.pickle","wb"))
 """

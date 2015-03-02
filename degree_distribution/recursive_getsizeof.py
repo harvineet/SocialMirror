@@ -1,5 +1,5 @@
 #recipe-577504-1
-#http://code.activestate.com/recipes/577504/
+#Copied from http://code.activestate.com/recipes/577504/
 from __future__ import print_function
 from sys import getsizeof, stderr
 from itertools import chain

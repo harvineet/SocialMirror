@@ -3,6 +3,7 @@ import time
 import sys
 import os
 import cPickle as pickle
+import random
 
 min_tweets_sequence = 0 # minimum number of tweets on a hashtag to remove hashtags with only few tweets available for extracting context
 
@@ -12,7 +13,9 @@ time_diff_for_edge = 10
 follower_following_cond = False
 geography_cond = False
 
+context_length = 2 #m/2, length of context (to one side) or length of paths (half of the length) to consider
 min_context_length = 0 #minimum length of context or length of paths to consider
+gamma = 1 #number of contexts or paths for a tweet in a sequence
 
 def get_location(author):
 	if author in location_buckets:
@@ -30,22 +33,84 @@ def init_adj_list(num_nodes):
 #get all paths starting from a vertex using DFS on hashtag graph
 #Reference: http://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/
 def dfs_paths(adj,start):
+	# visited = set()
+	paths = []
 	stack = [(start, [start])]
 	while stack:
 		(vertex, path) = stack.pop()
 		nbh = set(adj[vertex]) - set(path)
+		# nbh = set(adj[vertex]) - visited # visit each vertex once
 		if len(nbh)==0:
-			yield path
+			paths.append(path)
 		for next in nbh:
-			stack.append((next, path + [next])) #instead of paths of fixed length, get maximum length paths in the graph
+			stack.append((next, path + [next])) #instead of all possible paths from all vertices, get maximum length paths in the graph
+			# visited.add(next)
+	return paths
+
+#sample paths to the right of vertex from hashtag graph
+def sample_paths_one_side(adj,present_node):
+	paths = []
+	for i in xrange(0,gamma):
+		path=[present_node]
+		count=0
+		while count<context_length: #change context length value for single side
+			adjacent_nodes = adj[present_node]
+			if adjacent_nodes!=[]:
+				present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				path.append(present_node)
+				count+=1
+			else:
+				break
+		paths.append(path)
+	return paths
+	
+#sample paths to left and right of vertex from hashtag graph
+def sample_paths_both_side(adj,rev_adj,start):
+	paths = []
+	present_node = start
+	print "Start", start
+	for i in xrange(0,gamma):
+		#left
+		path=[]
+		count=0
+		while count<context_length: #change context length value for single side
+			adjacent_nodes = rev_adj[present_node]
+			if adjacent_nodes!=[]:
+				present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				path.append(present_node)
+				print present_node, "out of", adjacent_nodes, "left"
+				count+=1
+			else:
+				break
+		path.reverse()
+		path.append(start)
+		print path, "from left"
+		#right
+		count=0
+		present_node = start
+		while count<context_length: #change context length value for single side
+			adjacent_nodes = adj[present_node]
+			if adjacent_nodes!=[]:
+				present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				path.append(present_node)
+				print present_node, "out of", adjacent_nodes, "right"
+				count+=1
+			else:
+				break
+		paths.append(path)
+		print path, "full"
+	return paths
 	
 #get user ids from vertex ids in paths
 def path_to_sentence(nodes,path):
+	s=[]
 	for i in path:
 		_,author = nodes[i]
-		yield str(author) #type of str for author is needed for using join
-
+		s.append(str(author)) #type of str for author is needed for using join
+	return s
+	
 #separate hashtag segments from adoption sequence of a hashtag using maximum time difference allowed for edges for reducing length of sequence to consider for hashtag graph
+"""
 def get_adoption_segments(sequence):
 	first_tw_time,first_tw_author = sequence[0]
 	prev_time = first_tw_time
@@ -62,7 +127,7 @@ def get_adoption_segments(sequence):
 	if seg!=[]:
 		segments.append(seg)
 	return segments
-		
+"""
 #get adjacency list of hashtag graph from a segment
 """
 def get_hashtag_graph_adj(segment):
@@ -86,65 +151,78 @@ def get_hashtag_graph_adj(segment):
 def get_hashtag_graph_adj(segment):
 	num_nodes = len(segment)
 	# adj_list = init_adj_list(num_nodes) #adjacency list for directed graph
-	adj_list = [[]] * num_nodes
-	for i in range(0, num_nodes):
-		adj_list[i] = []
+	adj_list = [[] for i in xrange(0, num_nodes)]
+	rev_adj_list = [[] for i in xrange(0, num_nodes)] #defaultdict(list)
+	# print "init", total_size(adj_list), total_size(rev_adj_list)
+	# print "adj list init"
 	if num_nodes==1:
-		return adj_list
-	location = dict()
-	for i in range(0,num_nodes):
+		return adj_list, rev_adj_list
+	location = [[] for i in xrange(0, max_locations)] #dict()
+	for i in xrange(0,num_nodes):
 		_,author = segment[i]
-		author_loc = get_location(author)
-		if author_loc not in location:
-			location[author_loc]=[]
-		location[author_loc].append(i) #time sorted order will change across locations, but not within location. order of vertices in adjacency list is still same
-	for loc in location:
-		same_loc_seq = location[loc]
-		for i in range(0,len(same_loc_seq)):
+		author_loc = location_buckets[author]
+		if author_loc!=-1: #no edges between users with unknown location
+			location[author_loc].append(i) #time sorted order will change across locations, but not within location. order of vertices in adjacency list is still same
+	print "location list", location
+	count=0
+	for same_loc_seq in location:
+		num_loc = len(same_loc_seq)
+		print count, "Count", len(same_loc_seq)
+		count+=1
+		for i in xrange(0,num_loc):
 			vertex_index_first = same_loc_seq[i]
 			time_first,_ = segment[vertex_index_first]
-			for j in range(i+1,len(same_loc_seq)):
+			for j in xrange(i+1,num_loc):
 				vertex_index_second = same_loc_seq[j]
 				time_second,_ = segment[vertex_index_second]
 				if time_second-time_first<=time_diff_for_edge: # only time difference considered for an edge, check other conditions
 					adj_list[vertex_index_first].append(vertex_index_second)
+					rev_adj_list[vertex_index_second].append(vertex_index_first)
+					# rev_adj_list[vertex_index_second].insert(0,vertex_index_first) #to make the order of vertices having edge to second vertex in decreasing order, i.e., closest vertex first
 				else:
 					break #tweets are arranged in increasing time, so no edges will be there with vertices past present node
 				#follower relation
 				#check if more than one connected components in a segment if single path is considered for each segment
-	return adj_list
+	# print "assigned", total_size(adj_list), total_size(rev_adj_list)
+
+	return adj_list, rev_adj_list
 	
 #get all paths of length m from hashtag graph
-def get_paths_from_graph(nodes, adj):
-	if len(nodes)<min_context_length: #only if fixed length paths are taken and less than m length paths are not taken
-		yield []
-	#DFS for paths starting from a vertex
-	for start in range(0,len(nodes)):
-		paths_vertices = dfs_paths(adj,start)
-		for p in paths_vertices:
-			if len(p)>=min_context_length: #only take paths above minimum context length
-				yield list(path_to_sentence(nodes,p))
+def get_paths_from_graph(nodes, adj, rev_adj):
+	if len(nodes)>=min_context_length: #only if less than m length paths are not taken
+		for start in xrange(0,len(nodes)):
+			# if len(nodes)-start-1<min_context_length: #number of vertices left are less than min context length
+				# break
+				
+			#DFS for paths starting from a vertex
+			# paths_vertices = dfs_paths(adj,start)
+			
+			#sample paths from right of all nodes
+			# paths_vertices = sample_paths_one_side(adj,start)
+			
+			#sample paths from left and right of all nodes
+			paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
+			
+			for p in paths_vertices:
+				if len(p)>=min_context_length: #only take paths above minimum context length
+					yield (start,path_to_sentence(nodes,p))
 
 #get sentences from hashtag sequences
 sentences=[]
-tag_count = 0
-
+max_locations = 2
 adoption_sequence = dict()
-adoption_sequence['test']=[(10,1),(15,2),(21,3),(23,4),(26,5)]
-location_buckets = {1:1,2:1,3:2,5:2}
-tag_count = 0
+adoption_sequence['test']=[(4,0),(10,1),(15,2),(21,3),(23,4),(26,5),(28,6),(37,7),(40,8),(45,9)]
+location_buckets = [0,0,1,1,-1,1,1,1,1,1]
+
 def get_sentences(adoption_sequence):
-	global tag_count
+	tag_count = 0
 	for t in adoption_sequence:
-		seq=adoption_sequence[t]
-		segments = get_adoption_segments(seq)
-		for seg in segments:
-			hashtag_graph_adj = get_hashtag_graph_adj(seg)
-			paths = get_paths_from_graph(seg, hashtag_graph_adj)
-			for p in paths: #change if only one path generated from a hashtag graph
-				yield p 
+		segment=adoption_sequence[t]
 		tag_count+=1
-		if tag_count%100==0:
-			print "Hashtag number", tag_count
+		adj_list, rev_adj_list = get_hashtag_graph_adj(segment)
+		print adj_list, rev_adj_list
+		paths = get_paths_from_graph(segment, adj_list, rev_adj_list)
+		for p in paths: #change if only one path generated from a hashtag graph
+			yield p
 
 print(list(get_sentences(adoption_sequence)))

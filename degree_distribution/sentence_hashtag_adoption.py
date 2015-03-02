@@ -25,7 +25,7 @@ for line in fr:
 	u = line.split(' ')
 	m[int(u[0])] = int(u[1])
 fr.close()
-print 'Map Read\n'
+print 'Map Read'
 
 #read adoption sequence from dif_timeline1s file
 adoption_sequence = pickle.load(open("hashtagAdoptionSequences_workingset.pickle","rb"))
@@ -67,6 +67,7 @@ print len(adoption_sequence)#, len(rem)
 print "timeline file read"
 #location information files
 #can use location combined by country in known_locations_country_us and known_locations1_country_us files
+max_locations = 141 #change number of unique locations to 97 for country_us files
 location_buckets = [-1] * 7697889
 # location_buckets = dict() #map to -1 for users not in location files
 fr = open('/twitterSimulations/known_locations.txt', 'r')
@@ -160,31 +161,27 @@ def get_adoption_segments(sequence):
 def get_hashtag_graph_adj(segment):
 	num_nodes = len(segment)
 	# adj_list = init_adj_list(num_nodes) #adjacency list for directed graph
-	adj_list = defaultdict(list)
-	rev_adj_list = defaultdict(list)
+	adj_list = [[] for i in xrange(0, num_nodes)]
+	rev_adj_list = [[] for i in xrange(0, num_nodes)] #defaultdict(list)
 	print "adj list init"
 	if num_nodes==1:
 		return adj_list, rev_adj_list
-	location = dict()
+	location = [[] for i in xrange(0, max_locations)] #dict()
 	for i in xrange(0,num_nodes):
 		_,author = segment[i]
 		author_loc = location_buckets[author]
-		try:
+		if author_loc!=-1: #no edges between users with unknown location
 			location[author_loc].append(i) #time sorted order will change across locations, but not within location. order of vertices in adjacency list is still same
-		except KeyError:
-			location[author_loc]=[i]
-	print "location dict"
+	print "location list"
 	count=0
-	for loc in location:
-		if loc==-1:
-			continue #no edges between users with unknown location
-		same_loc_seq = location[loc]
+	for same_loc_seq in location:
+		num_loc = len(same_loc_seq)
+		print count, "Count", len(same_loc_seq)
 		count+=1
-		print loc, "Count", len(same_loc_seq)
-		for i in xrange(0,len(same_loc_seq)):
+		for i in xrange(0,num_loc):
 			vertex_index_first = same_loc_seq[i]
 			time_first,_ = segment[vertex_index_first]
-			for j in xrange(i+1,len(same_loc_seq)):
+			for j in xrange(i+1,num_loc):
 				vertex_index_second = same_loc_seq[j]
 				time_second,_ = segment[vertex_index_second]
 				if time_second-time_first<=time_diff_for_edge: # only time difference considered for an edge, check other conditions
@@ -195,6 +192,7 @@ def get_hashtag_graph_adj(segment):
 					break #tweets are arranged in increasing time, so no edges will be there with vertices past present node
 				#follower relation
 				#check if more than one connected components in a segment if single path is considered for each segment
+	
 	return adj_list, rev_adj_list
 """
 def get_hashtag_graph_adj(segment):
@@ -262,9 +260,11 @@ def get_sentences(adoption_sequence):
 			for p in paths: #change if only one path generated from a hashtag graph
 				yield p 
 		"""
-		hashtag_graph_adj, rev_adj_list = get_hashtag_graph_adj(seq)
+		hashtag_graph_adj, hashtag_graph_adj_rev = get_hashtag_graph_adj(seq)
 		print "Adjacency list formed"
-		# paths = get_paths_from_graph(seq, hashtag_graph_adj, rev_adj_list)
+		# if tag_count>2:
+			# break
+		# paths = get_paths_from_graph(seq, hashtag_graph_adj, hashtag_graph_adj_rev)
 		# print "Paths formed"
 		# for p in paths: #change if only one path generated from a hashtag graph
 			# yield p 
