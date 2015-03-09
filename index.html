@@ -1,6 +1,31 @@
 <html>
 <body>
 
+<h3>Extracting contexts for learning node representations</h3>
+
+Procedure for obtaining contexts for user tweets:</br>
+</br>
+1. Starting from hashtag traces, i.e. time-ordered set of tweets on the hashtags. For each hashtag,</br>
+</br>
+  1.1 create hashtag graph (directed), with an edge from user tweet t_1 to t_2 if timestamp of t_1 and t_2 differ by atmost 12 hours and they're from the same geography.</br>
+</br>
+  1.2 For each tweet (node in the hashtag graph), extract path starting from the corresponding node and traversing the DAG to the left (in reverse direction of edges) and right, selecting from neighbouring nodes at random, i.e. doing a random walk of length m (context width parameter) in each direction. The max length of path thus obtained is 2*m+1 (m is set to 5). One such path is sampled for each tweet in the hashtag graph (this is a parameter, d, set to 1).</br>
+</br>
+Time taken for creating sentence file: approx. 6 hours (using 3 parallel processes, can be increased), most of the time is taken in creating adjacency list for hashtag graphs and the bottleneck being hashtags with a large number of closely-timed tweets, such as 'ff', 'rt', 'win'.</br>
+Dataset characteristics:</br>
+Number of hashtags: 3617312</br>
+Number of unique users: 2628833</br>
+Number of sentences (or paths): 175881363. The plot for the frequency distribution of path lengths (paths with nodes less than 2, i.e. isolated nodes, were removed):</br>
+<img src="plots/FrequencyPlotContextLength.png" width="400" height="400" /></br>
+Considering all the sentences as a text corpus for input to word2vec,</br>
+Size of corpus: 1525212745</br>
+Size of vocabulary: 2628833</br>
+The plot for cumulative distribution of user occurrences in the corpus is:</br>
+<img src="plots/CumulativeFrequencyUserOccurrence.png" width="600" height="400" /></br>
+So to reduce the vocabulary size to about 1 million, users occurring less than 200 times in the corpus have to be removed.
+
+<h4> 04 Mar </h4>
+
 <h3>Checking sparsity of contexts for learning node representations</h3>
 Filtering users: Taking the median values for number of followees and number of tweets, filtered users such that, number of followees > 200 and number of tweets > 15. This resulted in a set of 1,001,525 users (so the vocabulary size for node vector training will be 1M).</br>
 For this set of users, considering two ways of generating context:</br>
