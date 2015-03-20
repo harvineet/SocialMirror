@@ -18,9 +18,9 @@ context_length = 5 #m/2, length of context (to one side) or length of paths (hal
 min_context_length = 2 #minimum length of context or length of paths to consider
 gamma = 1 #number of contexts or paths for a tweet in a sequence
 
-adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt"
-NUM_LINES = 3617312 #number lines in adoption_sequence_filename
-out_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files/" #make output directory if it doesn't exist
+adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences_filter.txt"
+NUM_LINES = 2701284 #3617312 #number lines in adoption_sequence_filename
+out_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files_filter/" #make output directory if it doesn't exist
 NUM_PROCESSES = 6
 
 #read index of each user out of 7697889 users from map file
@@ -136,9 +136,9 @@ def sample_paths_one_side(adj,present_node):
 #sample paths to left and right of vertex from hashtag graph
 def sample_paths_both_side(adj,rev_adj,start):
 	paths = []
-	present_node = start
 	for i in xrange(0,gamma):
 		#left
+		present_node = start
 		path=[]
 		count=0
 		while count<context_length: #change context length value for single side
@@ -164,6 +164,41 @@ def sample_paths_both_side(adj,rev_adj,start):
 				break
 		paths.append(path)
 	return paths
+
+#sample neighbouring vertices to left and right of vertex from hashtag graph
+def sample_nbhs_bfs(adj,rev_adj,start):
+	paths = []
+	for i in xrange(0,gamma):
+		#left
+		path=[]
+		count=0
+		queue=[start]
+		visited=set()
+		while count<context_length+1 and queue!=[]: #change context length value for single side
+			present_node = queue.pop()
+			if present_node not in visited:
+				# present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				visited.add(present_node)
+				adjacent_nodes = [node for node in rev_adj[present_node] if node not in visited]
+				path=[present_node]+path
+				queue=adjacent_nodes+queue
+				count+=1
+		path=path[:-1]
+		#right
+		count=0
+		queue=[start]
+		visited=set()
+		while count<context_length+1 and queue!=[]: #change context length value for single side
+			present_node = queue.pop(0)
+			if present_node not in visited:
+				# present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				visited.add(present_node)
+				adjacent_nodes = [node for node in adj[present_node] if node not in visited]
+				path.append(present_node)
+				queue+=adjacent_nodes
+				count+=1
+		paths.append(path)
+	return paths
 	
 #get user ids from vertex ids in paths
 def path_to_sentence(nodes,path):
@@ -172,8 +207,29 @@ def path_to_sentence(nodes,path):
 		_,author = nodes[i]
 		s.append(str(author)) #type of str for author is needed for using join
 	return s
-
-#get adjacency list of hashtag graph from a segment
+"""
+#get adjacency list of hashtag graph from a segment, using only time diff
+def get_hashtag_graph_adj(segment):
+	num_nodes = len(segment)
+	adj_list = [[] for i in xrange(0, num_nodes)]
+	rev_adj_list = [[] for i in xrange(0, num_nodes)]
+	# print "adj list init"
+	if num_nodes==1:
+		return adj_list, rev_adj_list
+	for i in xrange(0,num_nodes):
+		time_first,author_first = segment[i]
+		for j in xrange(i+1,num_nodes):
+			time_second,author_second = segment[j]
+			if time_second-time_first<=time_diff_for_edge: # only time difference considered for an edge, check other conditions
+				adj_list[i].append(j)
+				rev_adj_list[j].append(i)
+			else:
+				break #tweets are arranged in increasing time, so no edges will be there with vertices past present node
+			#follower relation
+			#check if more than one connected components in a segment if single path is considered for each segment
+	return adj_list, rev_adj_list
+"""
+#get adjacency list of hashtag graph from a segment, using both geography and time difference
 def get_hashtag_graph_adj(segment):
 	num_nodes = len(segment)
 	#adjacency list for directed graph
@@ -209,6 +265,7 @@ def get_hashtag_graph_adj(segment):
 				#follower relation
 				#check if more than one connected components in a segment if single path is considered for each segment
 	return adj_list, rev_adj_list
+
 """
 def get_hashtag_graph_adj(segment):
 	num_nodes = len(segment)
@@ -248,6 +305,9 @@ def get_paths_from_graph(nodes, adj, rev_adj):
 			
 			#sample paths from left and right of all nodes
 			paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
+			
+			#sample neighbours from left and right of all nodes in breadth-first search way
+			# paths_vertices = sample_nbhs_bfs(adj,rev_adj,start)
 			
 			for p in paths_vertices:
 				if len(p)>=min_context_length: #only take paths above minimum context length

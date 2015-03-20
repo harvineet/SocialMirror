@@ -63,10 +63,10 @@ with open('/twitterSimulations/timeline_data/dif_timeline1s', 'r') as fr:
 # if(count >= 5):
 	# rem[prev] = len(adoption_sequence[prev])
 	# del adoption_sequence[prev]
-"""
+
 print len(adoption_sequence)#, len(rem)
 # pickle.dump(rem,open('nonEmergentHashtags.pickle','wb'))
-
+"""
 print "timeline file read"
 #location information files
 #can use location combined by country in known_locations_country_us and known_locations1_country_us files
@@ -93,7 +93,32 @@ for line in fr:
 		pass
 fr.close()
 print "location file read"
-	
+
+# reading follower graph files
+arr = ["user_followers_bigger_graph.txt","user_followers_bigger_graph_2.txt", "user_followers_bigger_graph_i.txt","user_followers_bigger_graph_recrawl_2.txt", "user_followers_bigger_graph_recrawl_3.txt","user_followers_bigger_graph_recrawl.txt"]
+
+follower_adj = [ [] for i in xrange(0, 7697889) ]
+
+for i in arr:
+	fr = open("/twitterSimulations/graph/" + i,'r')
+	for line in fr:
+		line = line.rstrip()
+		u = line.split(' ')
+		if(int(u[0]) > 7697889):
+			continue
+		if len(u) > 2:
+			for j in range(2,len(u)):
+				follower_adj[m[int(u[1])]].append(m[int(u[j])])
+	fr.close()
+	print i
+
+print 'Graph Read\n'
+
+for i in range(0, 7697889):
+	follower_adj[i] = set(follower_adj[i])
+
+print 'Graph Set\n'
+
 #initialise adjacency list
 def init_adj_list(num_nodes):
 	adj = [[]] * num_nodes
@@ -213,17 +238,19 @@ def get_hashtag_graph_adj(segment):
 	count=0
 	for same_loc_seq in location:
 		num_loc = len(same_loc_seq)
-		# print count, "Count", len(same_loc_seq)
+		print count, "Count", len(same_loc_seq)
 		count+=1
 		for i in xrange(0,num_loc):
 			vertex_index_first = same_loc_seq[i]
-			time_first,_ = segment[vertex_index_first]
+			time_first,author_first = segment[vertex_index_first]
+			followers_author_first = follower_adj[author_first]
 			for j in xrange(i+1,num_loc):
 				vertex_index_second = same_loc_seq[j]
-				time_second,_ = segment[vertex_index_second]
+				time_second,author_second = segment[vertex_index_second]
 				if time_second-time_first<=time_diff_for_edge: # only time difference considered for an edge, check other conditions
-					adj_list[vertex_index_first].append(vertex_index_second)
-					rev_adj_list[vertex_index_second].append(vertex_index_first)
+					if author_second in followers_author_first:
+						adj_list[vertex_index_first].append(vertex_index_second)
+						rev_adj_list[vertex_index_second].append(vertex_index_first)
 					# rev_adj_list[vertex_index_second].insert(0,vertex_index_first) #to make the order of vertices having edge to second vertex in decreasing order, i.e., closest vertex first
 				else:
 					break #tweets are arranged in increasing time, so no edges will be there with vertices past present node
@@ -282,14 +309,14 @@ def get_paths_from_graph(nodes, adj, rev_adj):
 def get_sentences(adoption_sequence):
 	tag_count = 0
 	for t in adoption_sequence:
-		if t!='ff': # count 4103630, ff has 1081979 tweets, adj. list problem
-			continue
+		# if t!='ff': # count 4103630, ff has 1081979 tweets, adj. list problem
+			# continue
 		segment=adoption_sequence[t]
 
 		#print number of the hashtag being processed
 		tag_count+=1
-		if tag_count%1000==0:
-			print "Hashtag count", tag_count, "Hashtag", t#, "tweets", len(segment)
+		# if tag_count%1000==0:
+		print "Hashtag count", tag_count, "Hashtag", t, "tweets", len(segment)
 		
 		"""
 		segments = get_adoption_segments(seq)
@@ -300,27 +327,30 @@ def get_sentences(adoption_sequence):
 				yield p 
 		"""
 		adj_list, rev_adj_list = get_hashtag_graph_adj(segment)
-		# print "Adjacency list formed"
-		paths = get_paths_from_graph(segment, adj_list, rev_adj_list)
+		print "Adjacency list formed"
+		# paths = get_paths_from_graph(segment, adj_list, rev_adj_list)
 		# print "Paths formed"
 		
 		del adj_list #memory not freed after function return
 		del rev_adj_list
 		
-		# if tag_count>2:
-			# break
-		for p in paths: #change if only one path generated from a hashtag graph
-			yield p 
+		if tag_count>2:
+			break
+		# for p in paths: #change if only one path generated from a hashtag graph
+			# yield p 
 			
 #check how many users from dif_timeline1s are not mapped to any location
 """
-not_found=0
+not_found=set()
+a=0
 for t in adoption_sequence:
 	seq=adoption_sequence[t]
 	for time,author in seq:
-		if author not in location_buckets:
-			not_found+=1
-print not_found #13736074
+		if location_buckets[author]==-1:
+			not_found.add(author)
+			a+=1
+print "location unknown", len(not_found) #239476
+print a #not unique count 13736074
 """
 #check if adoption sequence is time sorted
 """
@@ -343,8 +373,8 @@ with open('hashtagAdoptionSequences.txt','wb') as fd:
 	# pickle.dump(adoption_sequence,fd)
 """
 #write sentences to file
-# get_sentences(adoption_sequence)
-
+get_sentences(adoption_sequence)
+"""
 # count=defaultdict(int)
 with open("hashtagAdoptionSentences_ff.txt","wb") as fd:
 	start_time = datetime.datetime.now()
@@ -356,3 +386,4 @@ with open("hashtagAdoptionSentences_ff.txt","wb") as fd:
 		# _=len(s)
 	print start_time, datetime.datetime.now()
 # pickle.dump(count,open("frequencyContextLength.pickle","wb"))
+"""

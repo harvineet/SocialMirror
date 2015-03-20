@@ -5,12 +5,12 @@ import cPickle as pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Pool, cpu_count
-
-in_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files/"
-out_dir = "/mnt/filer01/word2vec/degree_distribution/count_files/"
-num_files = 13
-NUM_PROCESSES = num_files
 """
+in_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files_filter/"
+out_dir = "/mnt/filer01/word2vec/degree_distribution/count_files/"
+num_files = 12
+NUM_PROCESSES = num_files
+
 def count_sentence_file(file_num,process_num):
 	count=defaultdict(int)
 	context_count=defaultdict(int)
@@ -24,8 +24,8 @@ def count_sentence_file(file_num,process_num):
 				author = int(u[id])
 				count[author]+=1
 	print "process", process_num, "file complete", file_num
-	pickle.dump(count,open(out_dir+"/frequencyNodes_1hr"+str(file_num)+".pickle","wb"))
-	pickle.dump(context_count,open(out_dir+"/frequencyContextLength_1hr"+str(file_num)+".pickle","wb"))
+	pickle.dump(count,open(out_dir+"/frequencyNodes_1hr_filter"+str(file_num)+".pickle","wb"))
+	pickle.dump(context_count,open(out_dir+"/frequencyContextLength_1hr_filter"+str(file_num)+".pickle","wb"))
 
 #run count_sentence_file on different adoption sentences files in parallel processes
 num_workers = min(NUM_PROCESSES,cpu_count())
@@ -41,17 +41,17 @@ pool.join()
 count=defaultdict(int)
 context_count=defaultdict(int)
 for file_num in range(0,num_files):
-	presentc = pickle.load(open(out_dir+"/frequencyNodes_1hr"+str(file_num)+".pickle","rb"))
-	presentcc = pickle.load(open(out_dir+"/frequencyContextLength_1hr"+str(file_num)+".pickle","rb"))
+	presentc = pickle.load(open(out_dir+"/frequencyNodes_1hr_filter"+str(file_num)+".pickle","rb"))
+	presentcc = pickle.load(open(out_dir+"/frequencyContextLength_1hr_filter"+str(file_num)+".pickle","rb"))
 	for i in presentc:
 		count[i]+=presentc[i]
 	for i in presentcc:
 		context_count[i]+=presentcc[i]
-pickle.dump(count,open(out_dir+"/comb_frequencyNodes_1hr.pickle","wb"))
-pickle.dump(context_count,open(out_dir+"/comb_frequencyContextLength_1hr.pickle","wb"))	
+pickle.dump(count,open(out_dir+"/comb_frequencyNodes_1hr_filter.pickle","wb"))
+pickle.dump(context_count,open(out_dir+"/comb_frequencyContextLength_1hr_filter.pickle","wb"))	
 """
 #plot
-count = pickle.load(open("comb_frequencyNodes_1hr.pickle","rb"))
+count = pickle.load(open("comb_frequencyNodes_1hr_filter.pickle","rb"))
 node_freq = []
 for i in count:
 	node_freq.append(count[i])
@@ -78,7 +78,7 @@ def freq_plot(data,xlab):
 freq_plot(node_freq,'Count of user occurrence in sentences')
 
 #frequency plot of path lengths
-ccount = pickle.load(open("comb_frequencyContextLength_1hr.pickle","rb"))
+ccount = pickle.load(open("comb_frequencyContextLength_1hr_filter.pickle","rb"))
 clength_freq = []
 for i in ccount:
 	clength_freq.append((i,ccount[i]))
@@ -95,3 +95,4 @@ def freq_plot_clength(data,xlab):
 	plt.grid()
 	plt.show()
 freq_plot_clength(clength_freq,'Path length')
+

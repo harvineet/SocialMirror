@@ -100,6 +100,41 @@ def sample_paths_both_side(adj,rev_adj,start):
 		paths.append(path)
 		print path, "full"
 	return paths
+
+#sample neighbouring vertices to left and right of vertex from hashtag graph
+def sample_nbhs_bfs(adj,rev_adj,start):
+	paths = []
+	for i in xrange(0,gamma):
+		#left
+		path=[]
+		count=0
+		queue=[start]
+		visited=set()
+		while count<context_length+1 and queue!=[]: #change context length value for single side
+			present_node = queue.pop()
+			if present_node not in visited:
+				# present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				visited.add(present_node)
+				adjacent_nodes = [node for node in rev_adj[present_node] if node not in visited]
+				path=[present_node]+path
+				queue=adjacent_nodes+queue
+				count+=1
+		path=path[:-1]
+		#right
+		count=0
+		queue=[start]
+		visited=set()
+		while count<context_length+1 and queue!=[]: #change context length value for single side
+			present_node = queue.pop(0)
+			if present_node not in visited:
+				# present_node=random.choice(adjacent_nodes) #randomly choose one of the neighbours of present node
+				visited.add(present_node)
+				adjacent_nodes = [node for node in adj[present_node] if node not in visited]
+				path.append(present_node)
+				queue+=adjacent_nodes
+				count+=1
+		paths.append(path)
+	return paths
 	
 #get user ids from vertex ids in paths
 def path_to_sentence(nodes,path):
@@ -201,7 +236,10 @@ def get_paths_from_graph(nodes, adj, rev_adj):
 			# paths_vertices = sample_paths_one_side(adj,start)
 			
 			#sample paths from left and right of all nodes
-			paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
+			# paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
+			
+			#sample neighbours from left and right of all nodes in breadth-first search way
+			paths_vertices = sample_nbhs_bfs(adj,rev_adj,start)
 			
 			for p in paths_vertices:
 				if len(p)>=min_context_length: #only take paths above minimum context length
