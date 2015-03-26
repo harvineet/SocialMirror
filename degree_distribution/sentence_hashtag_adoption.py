@@ -18,10 +18,10 @@ context_length = 5 #m/2, length of context (to one side) or length of paths (hal
 min_context_length = 2 #minimum length of context or length of paths to consider
 gamma = 1 #number of contexts or paths for a tweet in a sequence
 
-adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences_filter.txt"
-NUM_LINES = 2701284 #3617312 #number lines in adoption_sequence_filename
-out_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files_filter/" #make output directory if it doesn't exist
-NUM_PROCESSES = 6
+adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt"
+NUM_LINES = 3617312 #2701284 #number lines in adoption_sequence_filename
+out_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files/" #make output directory if it doesn't exist
+NUM_PROCESSES = 5
 
 #read index of each user out of 7697889 users from map file
 
@@ -304,10 +304,10 @@ def get_paths_from_graph(nodes, adj, rev_adj):
 			# paths_vertices = sample_paths_one_side(adj,start)
 			
 			#sample paths from left and right of all nodes
-			paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
+			# paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
 			
 			#sample neighbours from left and right of all nodes in breadth-first search way
-			# paths_vertices = sample_nbhs_bfs(adj,rev_adj,start)
+			paths_vertices = sample_nbhs_bfs(adj,rev_adj,start)
 			
 			for p in paths_vertices:
 				if len(p)>=min_context_length: #only take paths above minimum context length
@@ -354,8 +354,8 @@ def get_sentences(adoption_sequence_filename,start_line_num,end_line_num,process
 		paths = get_paths_from_graph(segment, adj_list, rev_adj_list)
 		# print "Paths formed"
 		
-		del adj_list #memory not freed after function return
-		del rev_adj_list
+		# del adj_list #memory not freed after function return
+		# del rev_adj_list
 		
 		# if tag_count>2:
 			# break

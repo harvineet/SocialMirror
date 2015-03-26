@@ -95,6 +95,7 @@ fr.close()
 print "location file read"
 
 # reading follower graph files
+# arr = ["user_followers_bigger_graph_recrawl_3.txt"]
 arr = ["user_followers_bigger_graph.txt","user_followers_bigger_graph_2.txt", "user_followers_bigger_graph_i.txt","user_followers_bigger_graph_recrawl_2.txt", "user_followers_bigger_graph_recrawl_3.txt","user_followers_bigger_graph_recrawl.txt"]
 
 follower_adj = [ [] for i in xrange(0, 7697889) ]
@@ -372,8 +373,37 @@ with open('hashtagAdoptionSequences.txt','wb') as fd:
 			fd.write('\n')
 	# pickle.dump(adoption_sequence,fd)
 """
+tagcount=0
+following_adopters = []
+total_tweet = []
+adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt"
+with open(adoption_sequence_filename, 'r') as fr:
+	for line in fr:
+		line = line.rstrip()
+		u = line.split(' ')
+		adopter_followers = set()
+		following_adopters_tag=0
+		total_tweet_tag=0
+		for i in range(1, len(u)):
+			# timestamp = int(u[i][0:u[i].index(',')])
+			total_tweet_tag+=1
+			author = int(u[i][u[i].index(',')+1 : ])
+			if author in adopter_followers:
+				following_adopters_tag+=1
+			adopter_followers.update(follower_adj[author])
+		following_adopters.append(following_adopters_tag)
+		total_tweet.append(total_tweet_tag)
+		tagcount+=1
+		if tagcount%100000==0:
+			print "Hashtag count", tagcount
+with open("following_adopters.pickle","wb") as fd:
+	pickle.dump(following_adopters,fd)
+	pickle.dump(total_tweet,fd)
+print "Sequence file read"
 #write sentences to file
+start_time = datetime.datetime.now()
 get_sentences(adoption_sequence)
+print "Start time", start_time, "End time", datetime.datetime.now()
 """
 # count=defaultdict(int)
 with open("hashtagAdoptionSentences_ff.txt","wb") as fd:

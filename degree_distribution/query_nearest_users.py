@@ -4,11 +4,16 @@ import cPickle as pickle
 import random
 import os, sys, datetime
 from heapq import nlargest
+from distance_w2v import *
 
 start_time = datetime.datetime.now()
 
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt" #"sample_sequences"
-time_diff_for_edge = 5*12*60*60 #5 context width for path in one direction
+time_diff_for_edge = 5*1*60*60 #5 context width for path in one direction
+vec_file = "../node_vectors_1hr_bfs_sgng.txt"
+vocab_file = "../node_vocab_1hr_bfs_sgng.txt"
+out_file = "nearest_users_compare1hr_bfs_sgng.pickle"
+vec,vocab_ind,_ = read_vector_file(vec_file)
 
 m = dict()
 fr = open("/twitterSimulations/graph/map.txt")
@@ -41,23 +46,23 @@ for line in fr:
 fr.close()
 print "location file read"
 
-def call_distance(word):
-	return os.system("./distance-filewrite ../node_vectors_12hr.bin query_output_temp12hr_5c "+str(word))
+# def call_distance(word):
+# 	return os.system("./distance-filewrite ../node_vectors_1hr_bfs_15.bin query_output_temp1hr_bfs_15 "+str(word))
 	
-def get_nearest():
-	nearest = []
-	with open("query_output_temp12hr_5c","rb") as fr:
-		for line in fr:
-			line=line.rstrip().split('\t')
-			nearest.append(int(line[0]))
-	return nearest
+# def get_nearest():
+# 	nearest = []
+# 	with open("query_output_temp1hr_bfs_15","rb") as fr:
+# 		for line in fr:
+# 			line=line.rstrip().split('\t')
+# 			nearest.append(int(line[0]))
+# 	return nearest
 
 def compare_nearest(seq,w2v):
 	return len(set(seq)&set(w2v))
 
 vocab = []
 freq = dict()
-with open("../node_vocab_12hr.txt","rb") as fr:
+with open(vocab_file,"rb") as fr:
 	next(fr)
 	for line in fr:
 		line=line.rstrip().split(' ')
@@ -69,7 +74,7 @@ sub_vocab=[]
 for v in vocab:
 	if freq[v]>10000:
 		sub_vocab.append(v)
-rand_users = random.sample(sub_vocab,100)
+rand_users = random.sample(vocab,100)
 rand_users_set = set(rand_users)
 vocab = set(vocab)
 print "Sample selected"
@@ -129,17 +134,18 @@ for i in range(0,len(rand_users)):
 nearest_users_w2v_pickle = dict()
 count_pickle = []
 for user in rand_users:
-	a = call_distance(user)
-	if a!=0:
-		print "call error"
-		sys.exit(0)
-	nearest_users_w2v = get_nearest()
+	# a = call_distance(user)
+	# if a!=0:
+	# 	print "call error"
+	# 	sys.exit(0)
+	# nearest_users_w2v = get_nearest()
+	nearest_users_w2v = get_Nnearest(user,vec,vocab_ind,100)
 	comp_count = compare_nearest(near_users_seq[user][0:100],nearest_users_w2v[0:100])
 	print "common users", user, comp_count, "out of", min(len(near_users_seq[user]),len(nearest_users_w2v))
 	count_pickle.append(comp_count)
 	nearest_users_w2v_pickle[user]=nearest_users_w2v
 
-with open("nearest_users_compare12hr_5c.pickle","wb") as fd:
+with open(out_file,"wb") as fd:
 	pickle.dump(rand_users,fd)
 	pickle.dump(count_pickle,fd)
 	pickle.dump(near_users_seq,fd)
