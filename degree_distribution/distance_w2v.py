@@ -58,34 +58,6 @@ def get_Nnearest(query,vec,vocab,N):
 				break
 	return wordN #zip(wordN,distN)
 
-def get_Nranked_list(query,vec,vocab,vocab_index,dim,N):
-	wordN = [0]*N
-	distN = [0.0]*N
-	try:
-		voc_ind = vocab_index[query]
-	except KeyError:
-		print "query word not present"
-		return
-	query_vec = vec[voc_ind]
-	for i in range(0,len(vec)):
-		if i==voc_ind:
-			continue
-		pres_word = vocab[i]
-		pres_vec = vec[i]
-		dist = 0.0
-		for x in range(0,dim):
-			dist+=query_vec[x]*pres_vec[x]
-		#dist = sum(query_vec[x]*pres_vec[x] for x in range(0,dim))
-		for j in range(0,N):
-			if dist>distN[j]:
-				for k in range(N-1,j,-1):
-					distN[k] = distN[k-1]
-					wordN[k] = wordN[k-1]
-				distN[j] = dist
-				wordN[j] = pres_word
-				break
-	return wordN #zip(wordN,distN)
-
 def get_distance(query1,query2,vec,vocab):
 	dist=0.0
 	try:

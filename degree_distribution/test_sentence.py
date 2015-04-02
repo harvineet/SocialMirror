@@ -13,9 +13,10 @@ time_diff_for_edge = 10
 follower_following_cond = False
 geography_cond = False
 
-context_length = 2 #m/2, length of context (to one side) or length of paths (half of the length) to consider
+context_length = 4 #m/2, length of context (to one side) or length of paths (half of the length) to consider
 min_context_length = 0 #minimum length of context or length of paths to consider
 gamma = 1 #number of contexts or paths for a tweet in a sequence
+NUM_LEVEL_LIMIT = 2
 
 def get_location(author):
 	if author in location_buckets:
@@ -101,6 +102,44 @@ def sample_paths_both_side(adj,rev_adj,start):
 		print path, "full"
 	return paths
 
+#sample neighbouring vertices right of a vertex from hashtag graph in bfs manner
+def sample_nbhs_bfs_one_side(adj,start):
+	paths = []
+	for i in xrange(0,gamma):
+		print "Start", start
+		present_node=start
+		path=[present_node]
+		count=0
+		next_level=adj[present_node]
+		visited=set()
+		visited.add(present_node)
+		num_levels=1
+		while count<context_length and next_level!=[] and num_levels<=NUM_LEVEL_LIMIT: #change context length value for single side
+			num_remaining = context_length-count
+			if len(next_level) < num_remaining:
+				print path, next_level, "before", num_remaining
+				path+=next_level
+				count+=len(next_level)
+				visited.update(next_level)
+				nbh=set()
+				for vertex_p in next_level:
+					for vertex_n in adj[vertex_p]:
+						if vertex_n not in visited:
+							nbh.add(vertex_n)
+				next_level=list(nbh)
+				num_levels+=1
+				print path, next_level, "after", visited
+			elif len(next_level) > num_remaining:
+				path+=random.sample(next_level,num_remaining) #order of vertices changed by sample
+				print path, "out of", next_level
+				break
+			else:
+				path+=next_level
+				print path, next_level, "all"
+				break
+		paths.append(path)
+	return paths
+	
 #sample neighbouring vertices to left and right of vertex from hashtag graph
 def sample_nbhs_bfs(adj,rev_adj,start):
 	paths = []
@@ -183,6 +222,7 @@ def get_hashtag_graph_adj(segment):
 			#check if more than one connected components in a segment if single path is considered for each segment
 	return adj_list
 """
+
 def get_hashtag_graph_adj(segment):
 	num_nodes = len(segment)
 	# adj_list = init_adj_list(num_nodes) #adjacency list for directed graph
@@ -221,7 +261,28 @@ def get_hashtag_graph_adj(segment):
 	# print "assigned", total_size(adj_list), total_size(rev_adj_list)
 
 	return adj_list, rev_adj_list
-	
+"""
+#get adjacency list of hashtag graph from a segment, using only time diff
+def get_hashtag_graph_adj(segment):
+	num_nodes = len(segment)
+	adj_list = [[] for i in xrange(0, num_nodes)]
+	rev_adj_list = [[] for i in xrange(0, num_nodes)]
+	# print "adj list init"
+	if num_nodes==1:
+		return adj_list, rev_adj_list
+	for i in xrange(0,num_nodes):
+		time_first,author_first = segment[i]
+		for j in xrange(i+1,num_nodes):
+			time_second,author_second = segment[j]
+			if time_second-time_first<=time_diff_for_edge: # only time difference considered for an edge, check other conditions
+				adj_list[i].append(j)
+				rev_adj_list[j].append(i)
+			else:
+				break #tweets are arranged in increasing time, so no edges will be there with vertices past present node
+			#follower relation
+			#check if more than one connected components in a segment if single path is considered for each segment
+	return adj_list, rev_adj_list
+"""
 #get all paths of length m from hashtag graph
 def get_paths_from_graph(nodes, adj, rev_adj):
 	if len(nodes)>=min_context_length: #only if less than m length paths are not taken
@@ -239,7 +300,10 @@ def get_paths_from_graph(nodes, adj, rev_adj):
 			# paths_vertices = sample_paths_both_side(adj,rev_adj,start) #first find path to the left of present node
 			
 			#sample neighbours from left and right of all nodes in breadth-first search way
-			paths_vertices = sample_nbhs_bfs(adj,rev_adj,start)
+			# paths_vertices = sample_nbhs_bfs(adj,rev_adj,start)
+			
+			#sample neighbours from right of all nodes in breadth-first search way
+			paths_vertices = sample_nbhs_bfs_one_side(adj,start)
 			
 			for p in paths_vertices:
 				if len(p)>=min_context_length: #only take paths above minimum context length

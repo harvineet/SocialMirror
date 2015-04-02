@@ -9,7 +9,7 @@ from distance_w2v import *
 start_time = datetime.datetime.now()
 
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt" #"sample_sequences"
-time_diff_for_edge = 5*1*60*60 #5 context width for path in one direction
+time_diff_for_edge = 1*1*60*60 #5 context width for path in one direction
 vec_file = "../node_vectors_1hr_bfs_sgng.txt"
 vocab_file = "../node_vocab_1hr_bfs_sgng.txt"
 out_file = "nearest_users_compare1hr_bfs_sgng.pickle"

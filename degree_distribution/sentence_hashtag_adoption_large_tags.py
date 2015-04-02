@@ -23,7 +23,7 @@ NUM_LEVEL_LIMIT = 3
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt"
 NUM_LINES = 3617312 #2701284 #number lines in adoption_sequence_filename
 out_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files/" #make output directory if it doesn't exist
-NUM_PROCESSES = 1
+NUM_PROCESSES = 5
 
 #read index of each user out of 7697889 users from map file
 """
@@ -282,7 +282,7 @@ def get_hashtag_graph_adj(segment):
 			#follower relation
 			#check if more than one connected components in a segment if single path is considered for each segment
 	return adj_list#, rev_adj_list
-"""
+
 #get adjacency list of hashtag graph from a segment, using both geography and time difference
 def get_hashtag_graph_adj_geo_time(segment):
 	num_nodes = len(segment)
@@ -319,7 +319,7 @@ def get_hashtag_graph_adj_geo_time(segment):
 				#follower relation
 				#check if more than one connected components in a segment if single path is considered for each segment
 	return adj_list#, rev_adj_list
-"""
+
 """
 def get_hashtag_graph_adj(segment):
 	num_nodes = len(segment)
@@ -479,24 +479,26 @@ with open("sequence_file_split_indices.pickle","rb") as fr:
 train_seq_id = set(train_seq_id)
 
 #indices of lines in sequence file with large sequences
-# with open("sequence_large_hashtags.pickle","rb") as fr:
-	# large_tag_id = pickle.load(fr)
-# large_tag_id = set(large_tag_id)&train_seq_id
-large_tag_id = []
+with open("sequence_large_hashtags.pickle","rb") as fr:
+	large_tag_id = pickle.load(fr)
+large_tag_id = set(large_tag_id)&train_seq_id
 
+def print_result(process_num,result):
+	print "Process", process_num, "result value", result
+"""
 # write_sentence('',0,2)
 #run write_sentences on different chunks of adoption sequence file in parallel processes
 num_workers = min(NUM_PROCESSES,cpu_count())
 pool = Pool(processes=num_workers) 
 process_num=0
-lines_per_process = int(NUM_LINES/(num_workers))
+lines_per_process = int(NUM_LINES/(2*num_workers))
 for s,e in ( (i,min(i+lines_per_process,NUM_LINES)) for i in xrange(0,NUM_LINES,lines_per_process) ):
-	pool.apply_async(write_sentence, args=(process_num,s,e,train_seq_id,large_tag_id))
+	pool.apply_async(write_sentence, args=(process_num,s,e,train_seq_id,large_tag_id),callback=print_result)
 	process_num+=1
 pool.close()
 pool.join()
 """
-process_num=13
+process_num=11
 #run write_sentences on hashtags with large sequences in adoption sequence file
 with open(out_dir+'/hashtagAdoptionSentences'+str(process_num)+'.txt','wb') as fd:
 	start_time = datetime.datetime.now()
@@ -514,6 +516,8 @@ with open(out_dir+'/hashtagAdoptionSentences'+str(process_num)+'.txt','wb') as f
 		segment = large_adopt_seq[t]
 		#print number of the hashtag being processed
 		tag_count+=1
+		if tag_count==39:
+			break
 		print "Process", process_num, "Hashtag count", tag_count, "Hashtag", t, "tweets", len(segment)
 
 		# adj_list = get_hashtag_graph_adj(segment)
@@ -536,4 +540,3 @@ with open(out_dir+'/hashtagAdoptionSentences'+str(process_num)+'.txt','wb') as f
 				fd.write(" ".join(p)+"\n")
 			del hashtag_graph_adj
 print "Process", process_num, "large hashtags", "Start time", start_time, "End time", datetime.datetime.now()
-"""
