@@ -143,15 +143,15 @@ for i in arr:
 
 print 'Graph Read\n'
 
-for i in range(0, 7697889):
-	follower_adj[i] = set(follower_adj[i])
+# for i in range(0, 7697889):
+	# follower_adj[i] = set(follower_adj[i])
 
 print 'Graph Set\n'
 
 with open("graph_files/follower_graph_tweeters","wb") as fd:
 	for i in follower_adj:
 		if i in adoption_sequence_users:
-			fol = follower_adj[i]&adoption_sequence_users
+			fol = set(follower_adj[i])&adoption_sequence_users
 			fol = map(str,list(fol))
 			fd.write(str(len(fol))+" "+str(i)+" "+" ".join(fol)+"\n")
 		

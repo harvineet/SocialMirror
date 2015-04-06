@@ -76,18 +76,18 @@ def get_Nranked_list(query,N):
 		print "query word not present"
 		return
 	query_vec = vec[voc_ind]
-	for i in range(0,len(vec)):
+	for i in xrange(0,len(vec)):
 		if i==voc_ind:
 			continue
 		pres_word = vocab[i]
 		pres_vec = vec[i]
 		dist = 0.0
-		for x in range(0,dim):
+		for x in xrange(0,dim):
 			dist+=query_vec[x]*pres_vec[x]
 		#dist = sum(query_vec[x]*pres_vec[x] for x in range(0,dim))
-		for j in range(0,N):
+		for j in xrange(0,N):
 			if dist>distN[j]:
-				for k in range(N-1,j,-1):
+				for k in xrange(N-1,j,-1):
 					distN[k] = distN[k-1]
 					wordN[k] = wordN[k-1]
 				distN[j] = dist

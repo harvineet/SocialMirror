@@ -146,7 +146,7 @@ print len(nb_seq_order)
 seq_random_index=range(0,len(tag_seq))
 random.shuffle(seq_random_index)
 
-def adopter_prediction(seq_random_index,process_num,start,end):
+def adopter_prediction(process_num,start,end):
 	seq_count_limit=100
 	num_seqs=0
 	mean_ap=0
@@ -217,7 +217,7 @@ process_num=0
 NUM_SEQ = len(seq_random_index)
 lines_per_process = int(NUM_SEQ/(2.0*num_workers))
 for s,e in ( (i,min(i+lines_per_process,NUM_SEQ)) for i in xrange(0,NUM_SEQ,lines_per_process) ):
-	pool.apply_async(adopter_prediction, args=(seq_random_index,process_num,s,e))
+	pool.apply_async(adopter_prediction, args=(process_num,s,e))
 	process_num+=1
 pool.close()
 pool.join()

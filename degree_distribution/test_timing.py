@@ -373,6 +373,8 @@ with open('hashtagAdoptionSequences.txt','wb') as fd:
 			fd.write('\n')
 	# pickle.dump(adoption_sequence,fd)
 """
+#count number of adopters of each hashtag who are among the followers of present adopters of the hashtag at the time of adoption
+"""
 tagcount=0
 following_adopters = []
 total_tweet = []
@@ -400,6 +402,7 @@ with open("following_adopters.pickle","wb") as fd:
 	pickle.dump(following_adopters,fd)
 	pickle.dump(total_tweet,fd)
 print "Sequence file read"
+"""
 #write sentences to file
 start_time = datetime.datetime.now()
 get_sentences(adoption_sequence)
