@@ -1,6 +1,16 @@
 <html>
 <body>
 
+<h3> Adopter prediction task </h3>
+
+Given the initial set of adopters of a hashtag, predict it's subsequent adopters. Adopters are the users who tweeted on the hashtag atleast ones.</br>
+The candidate users are ranked (acc. to their distance from the initial adopters using user vectors) and top-k users are compared with the actual list of adopters using the metrics, mean average precision at k and precision at k.</br>
+This is compared with a baseline, Nb_App, where users are ranked acc. to the number of training hashtags they tweeted on and another baseline, Fol, in which users are ranked acc. to the number of possible exposures to the hashtag (taken as number of following links from initial adopters).</br></br>
+<a href="tables.html">Results for k=100,200,500 and n=1,10,20</a>, where n is the number of initial adopters, k is number of users retreived from ranked list.</br>
+The values are averaged over 100 hashtags, chosen randomly from test set having at least k adopters.
+</br></br>
+The definitions of MAP and Precision@k are taken from Section 8.4 of <a href="http://nlp.stanford.edu/IR-book/pdf/08eval.pdf">http://nlp.stanford.edu/IR-book/pdf/08eval.pdf</a>. Average precision at k, AP@k, is defined as the average of precision values at each rank i, at which an adopter is retrieved from the top-k users in ranked list. Then, MAP@k is the average of AP@k values for hashtags in test set.
+
 <h3>Visualisation of user vectors</h3>
 2-dimensional visualisation of user vectors (2000 randomly selected users) using <a href="http://lvdmaaten.github.io/tsne/">t-SNE</a></br>
 Colour represents geography of the user.</br>

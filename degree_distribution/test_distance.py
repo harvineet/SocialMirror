@@ -1,4 +1,4 @@
-from heapq import nsmallest
+from heapq import nsmallest,nlargest
 from math import sqrt
 vec = [(1,1),(4,2),(2,2),(3,2),(3,3),(4,4),(2,3)]
 for i in range(0,7):
@@ -11,8 +11,8 @@ par_m = 2
 vocab_index=dict()
 for i in xrange(0,len(vocab)):
 	vocab_index[vocab[i]]=i
-query_set = [4,5]
-N=6
+query_set = [3,4]
+N=4
 
 def get_Nranked_list(query_set,N):
 	# wordN = [0]*N
@@ -66,3 +66,66 @@ def get_Nranked_list(query_set,N):
 	return wordN #zip(wordN,distN)
 
 print get_Nranked_list(query_set,N)
+
+adj = {1:set([2,3]),2:set([1,3,5,6]),3:set([1]),4:set([5]),5:set([1,2]),6:set([1])}
+nb_seq_order = [3,4,5,1,2,6,7]
+def getadj(user):
+	return adj[user]
+def get_Nranked_list_fol(query_set,N):
+	friend_count = dict()
+	init_adopters = query_set
+	sec_hop = 2
+	while (sec_hop>0):
+		for a in init_adopters:
+			followers = getadj(a)
+			print a,followers
+			for f in followers-set(query_set):
+				try:
+					friend_count[f]+=1
+				except KeyError:
+					friend_count[f]=1
+		init_adopters = friend_count.keys()
+		sec_hop-=1
+		print friend_count
+	friend_count_list = [(f,friend_count[f]) for f in friend_count]
+	print friend_count_list
+	ranked_list = [f for f,_ in nlargest(N,friend_count_list,key=lambda x: x[1])]
+	print ranked_list
+	if len(friend_count_list)>=N:
+		return ranked_list
+	else:
+		print "followers ranked list short"
+		users_left = N-len(friend_count_list)
+		for i in nb_seq_order:
+			if i not in friend_count and i not in query_set:
+				ranked_list.append(i)
+				users_left-=1
+			if users_left==0:
+				break
+		return ranked_list
+
+print get_Nranked_list_fol(query_set,N)
+
+num_init_adopters=2
+N = 3
+seq_sample_vocab = [3,4,1,7,2]
+init_adopters=seq_sample_vocab[0:num_init_adopters]
+seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
+M = len(seq_sample_vocab)
+print M, "pred seq length"
+#precision, recall evaluation
+adopters_vec = get_Nranked_list(init_adopters,N)
+print adopters_vec
+precision_k = 0.0
+num_hits = 0.0
+for k,p in enumerate(adopters_vec):
+	if p in seq_sample_vocab:
+		num_hits+=1.0
+		precision_k += num_hits/(k+1.0)
+average_precision = precision_k/min(M,N)
+# prec_r = num_hits/M
+prec_k = num_hits/N
+rec_k = num_hits/M
+print "Avg precision", average_precision, "adopters in seq", len(seq_sample_vocab)
+# print "RPrecision", prec_r
+print "Precision", prec_k, "Recall", rec_k
