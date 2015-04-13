@@ -23,11 +23,11 @@ seq_len_threshold = 500 # minimum number of adopters for a hashtag to consider t
 
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt"
 NUM_LINES = 3617312 #2701284 #number lines in adoption_sequence_filename
-out_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files_timeonly/" #make output directory if it doesn't exist
+out_dir = "/mnt/filer01/word2vec/degree_distribution/sentences_files_loc/" #make output directory if it doesn't exist
 NUM_PROCESSES = 4
 
 #read index of each user out of 7697889 users from map file
-"""
+
 m = dict()
 fr = open("/twitterSimulations/graph/map.txt")
 for line in fr:
@@ -36,7 +36,7 @@ for line in fr:
 	m[int(u[0])] = int(u[1])
 fr.close()
 print 'Map Read'
-"""
+
 #read adoption sequence from dif_timeline1s file
 # adoption_sequence = pickle.load(open("hashtagAdoptionSequences_workingset.pickle","rb"))
 """
@@ -75,7 +75,7 @@ print len(adoption_sequence)#, len(rem)
 # pickle.dump(rem,open('nonEmergentHashtags.pickle','wb'))
 """
 # print "timeline file read"
-"""
+
 #location information files
 #can use location combined by country in known_locations_country_us and known_locations1_country_us files
 max_locations = 141 #change number of unique locations to 97 for country_us files
@@ -101,7 +101,7 @@ for line in fr:
 		pass
 fr.close()
 print "location file read"
-"""
+
 #get all paths starting from a vertex using DFS on hashtag graph
 #Reference: http://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/
 def dfs_paths(adj,start):
@@ -414,8 +414,8 @@ def get_sentences(adoption_sequence_filename,start_line_num,end_line_num,process
 		if tag_count%10000==0:
 			print "Process", process_num, "Hashtag count", tag_count, "Hashtag", t#, "tweets", len(segment)
 
-		adj_list = get_hashtag_graph_adj(segment)
-		# adj_list = get_hashtag_graph_adj_geo_time(segment)
+		# adj_list = get_hashtag_graph_adj(segment)
+		adj_list = get_hashtag_graph_adj_geo_time(segment)
 		# print "Adjacency list formed"
 		paths = get_paths_from_graph(segment, adj_list)
 		# print "Paths formed"
@@ -485,10 +485,10 @@ with open("sequence_file_split_indices.pickle","rb") as fr:
 train_seq_id = set(train_seq_id)
 
 #indices of lines in sequence file with large sequences
-with open("sequence_large_hashtags.pickle","rb") as fr:
-	large_tag_id = pickle.load(fr)
-large_tag_id = set(large_tag_id)&train_seq_id
-# large_tag_id = []
+# with open("sequence_large_hashtags.pickle","rb") as fr:
+	# large_tag_id = pickle.load(fr)
+# large_tag_id = set(large_tag_id)&train_seq_id
+large_tag_id = []
 
 # write_sentence('',0,2)
 #run write_sentences on different chunks of adoption sequence file in parallel processes

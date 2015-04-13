@@ -7,11 +7,12 @@ import random
 from heapq import nsmallest, nlargest
 import numpy
 
-vec_file = "/mnt/filer01/word2vec/node_vectors_1hr_bfsr.txt"
+vec_file = "/mnt/filer01/word2vec/node_vectors_1hr_bfsr_loc.txt"
+nb_sorted_pickle = "/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/baseline_user_order_1hr_bfsr_loc.pickle"
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt" #"sample_sequences"
-num_init_adopters = 10
+num_init_adopters = 1
 par_m = 8
-metric_Hausdorff_m_avg = 2
+metric_Hausdorff_m_avg = 0
 top_k = 500
 seq_len_threshold = top_k #500
 print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k
@@ -209,9 +210,9 @@ with open(adoption_sequence_filename, "rb") as fr:
 	for line in fr:
 		line = line.rstrip()
 		u = line.split(' ')
-		not_found=0
+		not_found = set()
 		adopters = set()
-		first_timestamp = int(u[1][0:u[1].index(',')])
+		# first_timestamp = int(u[1][0:u[1].index(',')])
 		# first tweet only after source_thr timestamp
 		# if first_timestamp>=source_thr
 		# check if <5 tweets in 12 hours for emergent hashtags, not already popular
@@ -227,10 +228,10 @@ with open(adoption_sequence_filename, "rb") as fr:
 						seq.append(author)
 						adopters.add(author)
 				else:
-					not_found+=1
+					not_found.add(author)
 			if len(seq)>num_init_adopters:
 				tag_seq.append(seq)
-				not_found_vocab.append(not_found)
+				not_found_vocab.append(len(not_found))
 				# adlen.append(len(seq))
 		# elif count not in test_seq_id:
 		# 	adop=[]
@@ -248,9 +249,9 @@ with open(adoption_sequence_filename, "rb") as fr:
 # nb_seq_part = [(a,nb_seq[a]) for a in nb_seq]
 # nb_seq_part_sorted = sorted(nb_seq_part, key=lambda x: x[1], reverse=True)
 # nb_seq_order = [a for a,_ in nb_seq_part_sorted]
-# pickle.dump(nb_seq_order,open("adopter_pred_files/baseline_user_order_bfsr.pickle","wb"))
+# pickle.dump(nb_seq_order,open(nb_sorted_pickle,"wb"))
 # pickle.dump(adlen,open("adlen.pickle","wb"))
-nb_seq_order = pickle.load(open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/baseline_user_order_bfsr.pickle","rb"))
+nb_seq_order = pickle.load(open(nb_sorted_pickle,"rb"))
 print len(nb_seq_order)
 print len(tag_seq),len(test_seq_id),count
 print sum(not_found_vocab)/float(len(not_found_vocab)),max(not_found_vocab),min(not_found_vocab)

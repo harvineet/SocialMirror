@@ -7,7 +7,7 @@ from numpy import array
 import math, random
 
 word_vectors = []
-path_vec_file = '/mnt/filer01/word2vec/node_vectors_12hr.txt'
+path_vec_file = '/mnt/filer01/word2vec/node_vectors_1hr_bfsr.txt'
 word_vector_dim = 100
 labels = dict()
 X_word = []
@@ -28,7 +28,7 @@ with open(path_vec_file, 'rb') as fr:
 		X_word.append(vec)
 
 word_freq_sorted = []
-path_vocab_file = '/mnt/filer01/word2vec/node_vocab_12hr.txt'
+path_vocab_file = '/mnt/filer01/word2vec/node_vocab_1hr_bfsr.txt'
 with open(path_vocab_file, 'rb') as fr:
 	next(fr)
 	for line in fr:
@@ -91,9 +91,9 @@ def get_word_vectors_ht(wlist):
 	vectors = []
 	color = []
 	tags=tag_seq.keys()
-	c1 = set(tag_seq[tags[0]]) #modikiadalat
-	c2 = set(tag_seq[tags[1]]) #7millionandcounting
-	c3 = set(tag_seq[tags[2]]) #time100
+	c1 = set(tag_seq[tags[0]]) #modikiadalat (dark blue)
+	c2 = set(tag_seq[tags[1]]) #7millionandcounting (light blue)
+	c3 = set(tag_seq[tags[2]]) #time100 (red)
 	for w in wlist:
 		vectors.append(X_word[labels[w]])
 		if w in c1:
@@ -125,7 +125,7 @@ def save_embed_plot((X,color),fname):
 	fig = Plot.figure()
 	Plot.scatter(Y[:,0], Y[:,1], s=10, c=color);
 	Plot.axis('off')
-	fig.savefig(fname, dpi=800, bbox_inches='tight')
+	fig.savefig(fname, dpi=300, bbox_inches='tight')
 	
 if __name__ == "__main__":
 	print "Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset."
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 	# X = Math.loadtxt("mnist2500_X.txt");
 	# labels = Math.loadtxt("mnist2500_labels.txt");
 	# save_embed_plot(get_word_vectors(most_freq),'embed_users_mostfreq.png')
-	# save_embed_plot(get_word_vectors(all_random),'embed_users_random.png')
-	# save_embed_plot(get_word_vectors(mid_freq),'embed_users_midfreq.png')
-	save_embed_plot(get_word_vectors_ht(list(users_ht)),'embed_users_random_ht.png')
+	save_embed_plot(get_word_vectors(all_random),'embed_users_random_1hr_bfsr.png')
+	save_embed_plot(get_word_vectors(mid_freq),'embed_users_midfreq_1hr_bfsr.png')
+	save_embed_plot(get_word_vectors_ht(list(users_ht)),'embed_users_random_ht_1hr_bfsr.png')
 	# save_embed_plot(get_word_vectors(least_freq),'embed_users_leastfreq.png')

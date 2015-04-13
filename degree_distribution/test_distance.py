@@ -129,3 +129,34 @@ rec_k = num_hits/M
 print "Avg precision", average_precision, "adopters in seq", len(seq_sample_vocab)
 # print "RPrecision", prec_r
 print "Precision", prec_k, "Recall", rec_k
+
+adoption_sequence_filename="ab.txt"
+seq_len_threshold=3
+def read_adoption_sequence(adoption_sequence_filename, start, end,train_seq_id,large_tag_id):
+	with open(adoption_sequence_filename, 'r') as fr:
+		count=0
+		for line in fr:
+			if count < start:
+				count+=1
+				continue
+			elif count >= end:
+				return
+			if count not in train_seq_id or count in large_tag_id:
+				count+=1
+				continue
+			count+=1
+			line = line.rstrip()
+			u = line.split(' ')
+			tag = u[0]
+			sequence = []
+			adopters = set()
+			for i in range(1, len(u)):
+				timestamp = int(u[i][0:u[i].index(',')])
+				author = int(u[i][u[i].index(',')+1 : ])
+				sequence.append((timestamp,author))
+				adopters.add(author)
+			if len(adopters) < seq_len_threshold:
+				continue
+			yield (tag,sequence)
+for i in read_adoption_sequence(adoption_sequence_filename, 0, 4,set([0,1,3]),[]):
+	print i
