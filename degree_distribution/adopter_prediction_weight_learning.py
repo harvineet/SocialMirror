@@ -1,20 +1,26 @@
-#get nearest users to the initial adopters of a hashtag sequence in test sequences using user vectors and compare with actual adopters in the sequence
+#get nearest users to the initial adopters of a hashtag sequence in test sequences using user vectors,
+#rank based on learned weighted sum of distances of candidates from initial adopters and compare with actual adopters in the sequence
 
 import cPickle as pickle
 import time
 from math import sqrt
 import random
-from heapq import nsmallest, nlargest
+from heapq import nsmallest, nlargest, merge
 import numpy
+from scipy.spatial import cKDTree as KDTree
+import sys
+sys.path.append('libsvm-3.20/python')
 
 vec_file = "/mnt/filer01/word2vec/node_vectors_1hr_pr.txt"
 nb_sorted_pickle = "/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/baseline_user_order_1hr_pr.pickle"
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt" #"sample_sequences"
-num_init_adopters = 20
+num_init_adopters = 10
 par_m = 8
-metric_Hausdorff_m_avg = 0
+metric_Hausdorff_m_avg = 2
 top_k = 500
 seq_len_threshold = top_k #500
+cand_size_factor = 3
+train_ex_limit = 200
 print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k
 
 with open("/mnt/filer01/word2vec/degree_distribution/sequence_file_split_indices.pickle","rb") as fr:
@@ -58,6 +64,73 @@ num_users = len(vocab)
 print "num users in train sequences", num_users
 # print "users removed from vocab", len(set(users_train)-set(vocab))
 # print "users in test sequences but not in vocab", len(users_test-set(vocab))
+
+# building kd-tree
+tic = time.clock()
+kd = KDTree(vec, leafsize=10)
+toc = time.clock()
+print "kdtree tree built in", (toc-tic)*1000
+
+def get_Nranked_list_kdtree(query_set,N):
+	try:
+		query_set_ind = [ vocab_index[query] for query in query_set ]
+	except KeyError:
+		print "query word not present"
+		return
+	query_vec = [vec[i] for i in query_set_ind]
+	#?use distance_upper_bound for set_size queries sequentially
+	d_list,knn_list = kd.query(query_vec,k=N+len(query_set_ind)) #, eps=eps)
+	#?use heap of size set_size and push top elements from set_size ranked list until N elements are popped
+	index_dist_list = []
+	for d,index in zip(d_list,knn_list):
+		filtered=[(dt,idx) for (dt,idx) in list(zip(d,index)) if idx not in query_set_ind]
+		index_dist_list.append(filtered)
+	knn=[]
+	sel=set()
+	count=0
+	for (d,idx) in merge(*index_dist_list):
+		if idx not in sel:
+			sel.add(idx)
+			knn.append(vocab[idx])
+			count+=1
+		if count==N:
+			break
+	return knn
+
+def get_cand_feature_vectors(query_set,next_adopters,N):
+	try:
+		query_set_ind = [ vocab_index[query] for query in query_set ]
+	except KeyError:
+		print "query word not present"
+		return
+	query_vec = [vec[i] for i in query_set_ind]
+	#?use distance_upper_bound for set_size queries sequentially
+	d_list,knn_list = kd.query(query_vec,k=cand_size_factor*N)
+
+	cand_set = set()
+	for index_list in knn_list:
+		filtered=[idx for idx in index_list if idx not in query_set_ind]
+		cand_set.update(filtered)
+	next_adopters_index = set([vocab_index[idx] for idx in next_adopters])
+	cand_set.update(next_adopters_index)
+
+	X=[]
+	Y=[]
+	for idx in cand_set:
+		dist_query_set = [0.0]*len(query_set)
+		cand_vec = vec[idx]
+		l=0
+		for q in query_vec:
+			dist = sum( (cand_vec[x]-q[x])**2 for x in xrange(0,dim) )
+			dist_query_set[l]= sqrt(dist)
+			l+=1
+		dist_query_set.sort()
+		label=0
+		if idx in next_adopters_index:
+			label=1
+		X.append(dist_query_set)
+		Y.append(label)
+	return X,Y
 
 def get_Nranked_list(query_set,N):
 	# wordN = [0]*N
@@ -275,25 +348,78 @@ ap_total = []
 prec_k_total = []
 rec_k_total = []
 
+"""
 #test sequences in random order
 seq_random_index=range(0,len(tag_seq))
 random.shuffle(seq_random_index)
+
+seq_index_filter = []
 for i in seq_random_index:
 	seq_sample_vocab = tag_seq[i]
-	# source_user=seq_sample[0]
-	# if source_user not in vocab_index:
-	# 	continue
 	init_adopters=seq_sample_vocab[0:num_init_adopters]
 	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
 	M = len(seq_sample_vocab)
 	N = top_k #1000 #M #num_users
 	if M<seq_len_threshold:
 		continue
+	seq_index_filter.append(i)
+
+#train-test split for learning weights
+num_train = int(0.5*len(seq_index_filter))
+print "training examples present", num_train
+train_seq_id = seq_index_filter[:num_train]
+test_seq_id = seq_index_filter[num_train:]
+with open("adopter_pred_files/sequence_file_split_indices_weight.pickle","wb") as fd:
+	pickle.dump(train_seq_id,fd)
+	pickle.dump(test_seq_id,fd)
+
+train_X = []
+train_Y = []
+l=0
+for i in train_seq_id:
+	seq_sample_vocab = tag_seq[i]
+	init_adopters=seq_sample_vocab[0:num_init_adopters]
+	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
+	M = len(seq_sample_vocab)
+	N = top_k #1000 #M #num_users
+	X, Y = get_cand_feature_vectors(init_adopters, seq_sample_vocab, N)
+	train_X+=X
+	train_Y+=Y
+	l+=1
+	if l%10==0:
+		print "example num", l
+	if l==train_ex_limit:
+		break
+print "training examples taken", l
+with open("adopter_pred_files/train_file_weight.pickle","wb") as fd:
+	pickle.dump(train_X,fd)
+	pickle.dump(train_Y,fd)
+"""
+
+with open("adopter_pred_files/train_file_weight.pickle","rb") as fr:
+	train_X = pickle.load(fr)
+	train_Y = pickle.load(fr)
+
+with open("adopter_pred_files/sequence_file_split_indices_weight.pickle","rb") as fr:
+	_ = pickle.load(fr)
+	test_seq_id = pickle.load(fr)
+
+for i in test_seq_id:
+	seq_sample_vocab = tag_seq[i]
+	init_adopters=seq_sample_vocab[0:num_init_adopters]
+	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
+	M = len(seq_sample_vocab)
+	N = top_k #1000 #M #num_users	
 	not_found=not_found_vocab[i]
 	num_seqs+=1
 	
-	#precision, recall evaluation
-	adopters_vec = get_Nranked_list(init_adopters,N)
+	#precision, recall evaluation, user vectors
+	# adopters_vec = get_Nranked_list(init_adopters,N)
+	adopters_vec = get_Nranked_list_kdtree(init_adopters,N)
+	# if adopters_vec!=adopters_vec_kdtree:
+	# 	print "not same points", "same", len(set(adopters_vec)&set(adopters_vec_kdtree)), "out of", N
+	# else:
+	# 	print "same"
 	precision_k = 0.0
 	num_hits = 0.0
 	for k,p in enumerate(adopters_vec):

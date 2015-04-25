@@ -4,15 +4,16 @@ import cPickle as pickle
 import time
 from math import sqrt
 import random
-from heapq import nsmallest, nlargest
+from heapq import nsmallest, nlargest, merge
 import numpy
+from scipy.spatial import cKDTree as KDTree
 
 vec_file = "/mnt/filer01/word2vec/node_vectors_1hr_pr.txt"
 nb_sorted_pickle = "/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/baseline_user_order_1hr_pr.pickle"
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt" #"sample_sequences"
-num_init_adopters = 20
+num_init_adopters = 50
 par_m = 8
-metric_Hausdorff_m_avg = 0
+metric_Hausdorff_m_avg = 2
 top_k = 500
 seq_len_threshold = top_k #500
 print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k
@@ -58,6 +59,40 @@ num_users = len(vocab)
 print "num users in train sequences", num_users
 # print "users removed from vocab", len(set(users_train)-set(vocab))
 # print "users in test sequences but not in vocab", len(users_test-set(vocab))
+
+# building kd-tree
+tic = time.clock()
+kd = KDTree(vec, leafsize=10)
+toc = time.clock()
+print "kdtree tree built in", (toc-tic)*1000
+
+def get_Nranked_list_kdtree(query_set,N):
+	try:
+		query_set_ind = [ vocab_index[query] for query in query_set ]
+	except KeyError:
+		print "query word not present"
+		return
+	query_vec = [vec[i] for i in query_set_ind]
+	#?use distance_upper_bound for set_size queries sequentially
+	#?N+1 wrong as N unique elements may not be there after merging lists from which query_set_index have been removed
+	d_list,knn_list = kd.query(query_vec,k=N+len(query_set_ind)) #, eps=eps)
+	#?use heap of size set_size and push top elements from set_size ranked list until N elements are popped
+	index_dist_list = []
+	for d,index in zip(d_list,knn_list):
+		filtered=[(dt,idx) for (dt,idx) in list(zip(d,index)) if idx not in query_set_ind]
+		index_dist_list.append(filtered)
+	#?replace index with lesser distance if repeating
+	knn=[]
+	sel=set()
+	count=0
+	for (d,idx) in merge(*index_dist_list):
+		if idx not in sel:
+			sel.add(idx)
+			knn.append(vocab[idx])
+			count+=1
+		if count==N:
+			break
+	return knn
 
 def get_Nranked_list(query_set,N):
 	# wordN = [0]*N
@@ -292,8 +327,13 @@ for i in seq_random_index:
 	not_found=not_found_vocab[i]
 	num_seqs+=1
 	
-	#precision, recall evaluation
-	adopters_vec = get_Nranked_list(init_adopters,N)
+	#precision, recall evaluation, user vectors
+	# adopters_vec = get_Nranked_list(init_adopters,N)
+	adopters_vec = get_Nranked_list_kdtree(init_adopters,N)
+	# if adopters_vec!=adopters_vec_kdtree:
+	# 	print "not same points", "same", len(set(adopters_vec)&set(adopters_vec_kdtree)), "out of", N
+	# else:
+	# 	print "same"
 	precision_k = 0.0
 	num_hits = 0.0
 	for k,p in enumerate(adopters_vec):

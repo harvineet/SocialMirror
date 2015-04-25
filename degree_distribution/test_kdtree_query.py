@@ -44,8 +44,8 @@ def get_Nranked_list(query_set_ind,N):
 	dist_total = []
 	set_size = len(query_set_ind)
 	for i in xrange(0,len(vec)):
-		# if i in query_set_ind:
-			# continue
+		if i in query_set_ind:
+			continue
 		pres_word = i
 		pres_vec = vec[i]
 		dist_k = [0.0]*set_size
@@ -68,6 +68,7 @@ N=10
 k=500
 M= 2654594 #1000000
 D=10
+S=2
 eps = 0
 
 vec,vocab,dim = read_vector_file(vec_file)
@@ -75,15 +76,37 @@ print "num points", len(vec), "dim", dim
 
 # vec = [v[:D] for v in vec[:M]]
 print len(vec),len(vec[0]), "eps", eps
-
 tic = time.clock()
 kd = KDTree(vec, leafsize=10)
 toc = time.clock()
 print "tree built in", (toc-tic)*1000
 
+for _ in range(0,N):	
+	sample = random.sample(range(0,M),S)
+	sample_vec = [vec[i] for i in sample]
+	
+	tic = time.clock()
+	d_list,knn_list = kd.query(sample_vec,k=k+1) #, eps=eps)
+	dist_n_list = []
+	for d,n in zip(d_list,knn_list):
+		dist_n_list+=list(zip(n,d))[1:]
+	knn= [w for w,_ in nsmallest(k,dist_n_list,key=lambda x: x[1])]
+	toc = time.clock()
+	# print "tree query in", (toc-tic)*1000
+	t+=(toc-tic)*1000
+	
+	tic1 = time.clock()
+	knn_brute = get_Nranked_list(sample,k)
+	toc1 = time.clock()
+	# print "tree query in", (toc1-tic1)*1000
+	if knn_brute!=knn:
+		print "not same points", "same", len(set(knn_brute)&set(knn)), "out of", k
+	t1+=(toc1-tic1)*1000
+print "tree query in, avg, kdtree", t*1./N, "brute", t1*1./N
+"""
 for i in random.sample(range(0,M),N):
 	tic = time.clock()
-	_,knn = kd.query(vec[i],k=k, eps=eps)
+	_,knn = kd.query(vec[i],k=k) #, eps=eps)
 	toc = time.clock()
 	# print i, knn
 	# print "tree query in", (toc-tic)*1000
@@ -98,3 +121,4 @@ for i in random.sample(range(0,M),N):
 		print "not same points", "same", len(set(knn_brute)&set(list(knn))), "out of", k
 	t1+=(toc1-tic1)*1000
 print "tree query in, avg, kdtree", t*1./N, "brute", t1*1./N
+"""
