@@ -1,4 +1,6 @@
-#get nearest users to the initial adopters of a hashtag sequence in test sequences using user vectors and compare with actual adopters in the sequence
+#get nearest users to the initial adopters of a hashtag sequence in test sequences using user vectors,
+#rank based on learned weighted sum of distances of candidates from initial adopters and compare with actual adopters in the sequence
+#train and test model on each topic in training
 
 import cPickle as pickle
 import time
@@ -6,19 +8,41 @@ from math import sqrt
 import random
 from heapq import nsmallest, nlargest, merge
 import numpy
-from scipy.spatial import cKDTree as KDTree
+# from scipy.spatial import cKDTree as KDTree
+from sklearn.neighbors import NearestNeighbors
 import sys
+# sys.path.append('libsvm-3.20/python')
+# from svmutil import *
+# sys.path.append('liblinear-1.96/python')
+# from liblinearutil import *
+from sklearn.svm import LinearSVC, SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.cross_validation import KFold
 
 vec_file = "/mnt/filer01/word2vec/node_vectors_1hr_pr.txt"
 nb_sorted_pickle = "/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/baseline_user_order_1hr_pr.pickle"
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt" #"sample_sequences"
-num_init_adopters = 3
+num_init_adopters = 10
 par_m = 8
-metric_Hausdorff_m_avg = 2
-top_k = 10
+metric_Hausdorff_m_avg = 0
+top_k = 1000
 seq_len_threshold = top_k #500
+cand_size_factor = 1
+train_ex_limit = 500
 norm_vec = True
-print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k, norm_vec
+cv_fold = 5
+top_k_test = 400
+
+def init_clf():
+	# clf = LinearSVC(penalty='l2', loss='squared_hinge', dual=False, C=1.0, class_weight=None)
+	clf = SVC(C=1.0, kernel='rbf', shrinking=True, probability=False, tol=0.001, cache_size=2000, class_weight=None, max_iter=-1)
+	# clf = RandomForestClassifier(n_estimators=100, n_jobs=10, class_weight='auto')
+	# clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, class_weight=None, max_iter=100)
+	return clf
+
+# training_options='-s 0 -t 2 -b 1 -m 8000'
+print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k, cand_size_factor, train_ex_limit
 
 with open("/mnt/filer01/word2vec/degree_distribution/sequence_file_split_indices.pickle","rb") as fr:
 	_ = pickle.load(fr)
@@ -39,22 +63,18 @@ def read_vector_file(path_vectors_file):
 				print "vector length error"
 			word = int(u[0])
 			#normalise to length 1
-			if norm_vec:
-				vec = []
-				length = 0.0
-				for d in u[1:]:
-					num=float(d)
-					vec.append(num)
-					length+=num**2
-				#vec = map(float,u[1:])
-				#length = sum(x**2 for x in vec)
-				length = sqrt(length)
-				vec_norm = [x/length for x in vec]
-				vectors.append(vec_norm)
-			else:
-				vec = map(float,u[1:])
-				vectors.append(vec)
+			vec = []
+			length = 0.0
+			for d in u[1:]:
+				num=float(d)
+				vec.append(num)
+				length+=num**2
+			#vec = map(float,u[1:])
+			#length = sum(x**2 for x in vec)
+			length = sqrt(length)
+			vec_norm = [x/length for x in vec]
 			vocab.append(word)
+			vectors.append(vec_norm)
 	return vectors, vocab, word_vector_dim
 
 vec,vocab,dim = read_vector_file(vec_file)
@@ -68,7 +88,9 @@ print "num users in train sequences", num_users
 
 # building kd-tree
 tic = time.clock()
-kd = KDTree(vec, leafsize=10)
+# kd = KDTree(vec, leafsize=10)
+neigh = NearestNeighbors(n_neighbors=5, radius=1.0, algorithm='ball_tree', leaf_size=100, metric='minkowski', p=2) #'ball_tree', 'kd_tree', 'auto'
+neigh.fit(vec)
 toc = time.clock()
 print "kdtree tree built in", (toc-tic)*1000
 
@@ -80,14 +102,15 @@ def get_Nranked_list_kdtree(query_set,N):
 		return
 	query_vec = [vec[i] for i in query_set_ind]
 	#?use distance_upper_bound for set_size queries sequentially
-	#?N+1 wrong as N unique elements may not be there after merging lists from which query_set_index have been removed
-	d_list,knn_list = kd.query(query_vec,k=N+len(query_set_ind)) #, eps=eps)
+	# query using scipy kdtree
+	# d_list,knn_list = kd.query(query_vec,k=N+len(query_set_ind)) #, eps=eps)
+	# query using sklearn
+	d_list,knn_list = neigh.kneighbors(X=query_vec, n_neighbors=N+len(query_set_ind), return_distance=True)
 	#?use heap of size set_size and push top elements from set_size ranked list until N elements are popped
 	index_dist_list = []
 	for d,index in zip(d_list,knn_list):
 		filtered=[(dt,idx) for (dt,idx) in list(zip(d,index)) if idx not in query_set_ind]
 		index_dist_list.append(filtered)
-	#?replace index with lesser distance if repeating
 	knn=[]
 	sel=set()
 	count=0
@@ -100,26 +123,30 @@ def get_Nranked_list_kdtree(query_set,N):
 			break
 	return knn
 
-#not correct, points not in candidate set can be in top-N
-def get_Nranked_list_kdtree_avg(query_set,N):
-	print query_set
+def get_cand_feature_vectors(query_set,next_adopters,N):
 	try:
 		query_set_ind = [ vocab_index[query] for query in query_set ]
 	except KeyError:
 		print "query word not present"
 		return
 	query_vec = [vec[i] for i in query_set_ind]
-	#?use distance_upper_bound for set_size queries sequentially
-	d_list,knn_list = kd.query(query_vec,k=N+len(query_set_ind))
-	print d_list,knn_list
+	# query using scipy kdtree
+	# d_list,knn_list = kd.query(query_vec,k=cand_size_factor*N+len(query_set_ind))
+	# query using sklearn
+	d_list,knn_list = neigh.kneighbors(X=query_vec, n_neighbors=cand_size_factor*N+len(query_set_ind), return_distance=True)
+
 	cand_set = set()
 	for index_list in knn_list:
 		filtered=[idx for idx in index_list if idx not in query_set_ind]
 		cand_set.update(filtered)
-	print cand_set
+	# next_adopters_index = set([vocab_index[idx] for idx in next_adopters])
+	# cand_set.update(next_adopters_index)
+
+	X=[]
+	Y=[]
 	cand_user=[]
+	num_adopters = 0
 	for idx in cand_set:
-		print idx, vocab[idx]
 		dist_query_set = [0.0]*len(query_set)
 		cand_vec = vec[idx]
 		l=0
@@ -127,11 +154,22 @@ def get_Nranked_list_kdtree_avg(query_set,N):
 			dist = sum( (cand_vec[x]-q[x])**2 for x in xrange(0,dim) )
 			dist_query_set[l]= sqrt(dist)
 			l+=1
-		print dist_query_set
-		cand_user.append((vocab[idx],sum(dist_query_set)*1./l))
-	print cand_user
-	knn_avg = [w for w,_ in nsmallest(N,cand_user,key=lambda x: x[1])]
-	return knn_avg
+		# avg = sum(dist_query_set)*1./l
+		dist_query_set=sorted(dist_query_set)
+		# dist_query_set.append(avg)
+		user_m_id = vocab[idx]
+		label=-1
+		if user_m_id in next_adopters:
+			label=1
+			num_adopters+=1
+		X.append(dist_query_set)
+		Y.append(label)
+		cand_user.append(user_m_id)
+	print "candidate set recall", num_adopters, "out of", len(next_adopters), "cand size", len(cand_user)
+	cc = 0.0
+	if len(next_adopters)!=0:
+		cc = num_adopters*1./len(next_adopters)
+	return X,Y,cand_user,cc
 
 def get_Nranked_list(query_set,N):
 	# wordN = [0]*N
@@ -169,7 +207,7 @@ def get_Nranked_list(query_set,N):
 			else:
 				dist_set=0.0
 		elif metric_Hausdorff_m_avg==2:
-			dist_set = sum(dist_k)*1./set_size
+			dist_set = sum(dist_k)/set_size
 		else:
 			dist_set=nearest_k
 		dist_total.append((pres_word,dist_set))
@@ -181,10 +219,8 @@ def get_Nranked_list(query_set,N):
 		# 		distN[j] = dist
 		# 		wordN[j] = pres_word
 		# 		break
-	# wordN = [w for w,_ in nsmallest(N,dist_total,key=lambda x: x[1])]
-	wordN,distN = zip(*nsmallest(N,dist_total,key=lambda x: x[1]))
-	print "brute", distN
-	return list(wordN) #zip(wordN,distN)
+	wordN = [w for w,_ in nsmallest(N,dist_total,key=lambda x: x[1])]
+	return wordN #zip(wordN,distN)
 
 #reading follower graph files
 m = dict()
@@ -338,6 +374,10 @@ mean_ap=0.0
 # mean_prec_r=0.0
 mean_prec_k=0.0
 mean_rec_k=0.0
+mean_ap_min=0.0
+# mean_prec_r_min=0.0
+mean_prec_k_min=0.0
+mean_rec_k_min=0.0
 mean_ap_nbapp=0.0
 # mean_prec_r_nbapp=0.0
 mean_prec_k_nbapp=0.0
@@ -350,34 +390,166 @@ ap_total = []
 # prec_r_total = []
 prec_k_total = []
 rec_k_total = []
+cand_cov = 0.0
 
+"""
 #test sequences in random order
 seq_random_index=range(0,len(tag_seq))
 random.shuffle(seq_random_index)
+
+seq_index_filter = []
 for i in seq_random_index:
 	seq_sample_vocab = tag_seq[i]
-	# source_user=seq_sample[0]
-	# if source_user not in vocab_index:
-	# 	continue
 	init_adopters=seq_sample_vocab[0:num_init_adopters]
 	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
 	M = len(seq_sample_vocab)
 	N = top_k #1000 #M #num_users
 	if M<seq_len_threshold:
 		continue
+	seq_index_filter.append(i)
+print "tags remaining", len(seq_index_filter)
+
+#train-test split for learning weights
+num_train = int(0.5*len(seq_index_filter))
+print "training examples present", num_train
+train_seq_id_weight = seq_index_filter[:num_train]
+test_seq_id_weight = seq_index_filter[num_train:]
+with open("adopter_pred_files/sequence_file_split_indices_weight_n40.pickle","wb") as fd:
+	pickle.dump(train_seq_id_weight,fd)
+	pickle.dump(test_seq_id_weight,fd)
+"""
+with open("adopter_pred_files/sequence_file_split_indices_weight_n10.pickle","rb") as fr:
+	train_seq_id_weight = pickle.load(fr)
+	test_seq_id_weight = pickle.load(fr)
+
+# train_X = []
+# train_Y = []
+l=0
+for i in train_seq_id_weight:
+	seq_sample_vocab = tag_seq[i]
+	init_adopters=seq_sample_vocab[0:num_init_adopters]
+	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
+	M = len(seq_sample_vocab)
+	N = top_k #1000 #M #num_users
+	X, Y, cand_user, cc = get_cand_feature_vectors(init_adopters, seq_sample_vocab, N)
+	cand_set_size = len(X)
+	X = numpy.asarray(X)
+	Y = numpy.asarray(Y)
+	# cand_user = numpy.asarray(cand_user)
+
+	precision_k_total = 0.0
+	#cross-validation, random split
+	kf = KFold(cand_set_size, n_folds=cv_fold, shuffle=True)
+	for train_ind,test_ind in kf:
+		train_X, test_X = X[train_ind], X[test_ind]
+		train_Y, test_Y = Y[train_ind], Y[test_ind]
+
+		# test_cand_user = cand_user[test_ind]
+		test_adopt_ind = [ind for ind,val in enumerate(test_Y) if val==1]
+		#re-initialise
+		clf_t = init_clf()
+		clf_t.fit(train_X, train_Y)
+
+		p_vals_adopt = clf_t.decision_function(test_X)
+		# p_vals = clf.predict_proba(X)
+		# p_vals_adopt = [p[1] for p in p_vals]
+
+		cand_prob_list = zip(range(0,len(test_Y)),p_vals_adopt)
+		pred_adopters = [w for w,_ in nlargest(top_k_test,cand_prob_list,key=lambda x: x[1])]
+
+		prec_k = len(set(test_adopt_ind)&set(pred_adopters))*1./top_k_test
+		precision_k_total += prec_k
+
+	cand_cov+=cc
+	print "Avg precision", precision_k_total, "adopters in seq", len(seq_sample_vocab), "cc", cc
+	
+	with open("adopter_pred_files/single_topic_train_test_files/train_file_n10_"+str(l)+".pickle","wb") as fd:
+		pickle.dump(X,fd)
+		pickle.dump(Y,fd)
+
+	l+=1
+	if l%20==0:
+		print "example num", l
+	if l==train_ex_limit:
+		break
+print "training examples taken", l, "avg candidate set recall", cand_cov*1./l
+# with open("adopter_pred_files/train_file_weight_c1_n40.pickle","wb") as fd:
+# 	pickle.dump(train_X,fd)
+# 	pickle.dump(train_Y,fd)
+with open("adopter_pred_files/topicwise_models/train_file_n10_aggr.pickle","wb") as fd:
+	pickle.dump(models,fd)
+"""
+with open("adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
+	train_X = pickle.load(fr)
+	train_Y = pickle.load(fr)
+"""
+# train_X_tmp = []
+# for i in train_X:
+# 	# feature = i+[sum(i)*1./len(i)]
+# 	feature = i[:-1]
+# 	train_X_tmp.append(feature)
+# train_X = train_X_tmp
+
+#train using libsvm
+# model = svm_train(train_Y, train_X, training_options)
+# svm_save_model('adopter_pred_files/libsvm_c2.model', model)
+
+#train using liblinear
+# model = train(train_Y, train_X, '-s 0 -c 1')
+# save_model('adopter_pred_files/liblinear_s0_n40.model', model)
+# model = load_model('adopter_pred_files/liblinear_s0.model')
+
+#train using sklearn
+# clf.fit(train_X, train_Y)
+# print clf.get_params()
+"""
+models = []
+for l in range(0,train_ex_limit):
+	with open("adopter_pred_files/topicwise_models/train_file_n10_"+str(l)+".pickle","rb") as fr:
+		clf_t = pickle.load(fr)
+	models.append(clf_t)
+"""
+cand_cov = 0.0
+for i in test_seq_id_weight:
+	seq_sample_vocab = tag_seq[i]
+	init_adopters=seq_sample_vocab[0:num_init_adopters]
+	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
+	M = len(seq_sample_vocab)
+	N = top_k #1000 #M #num_users	
 	not_found=not_found_vocab[i]
 	num_seqs+=1
 	
-	#precision, recall evaluation, user vectors
-	adopters_vec = get_Nranked_list(init_adopters,N)
-	adopters_vec_kdtree = get_Nranked_list_kdtree_avg(init_adopters,N)
-	if adopters_vec!=adopters_vec_kdtree:
-		print "not same points", "same", len(set(adopters_vec)&set(adopters_vec_kdtree)), "out of", N
-	else:
-		print "same"
-	print [vocab_index[u] for u in adopters_vec_kdtree]
-	print [vocab_index[u] for u in adopters_vec]
-	continue
+	#precision, recall evaluation, user vectors and weight learning
+	X,_,cand_user,_ = get_cand_feature_vectors(init_adopters, set(), N)
+	cc = len(set(cand_user)&seq_sample_vocab)*1./len(seq_sample_vocab)
+	cand_cov+=cc
+	p_vals_avg = numpy.asarray([0.0]*len(X))
+	for l in range(0,train_ex_limit):
+		clf_t = models[l]
+		# _, _, p_vals = svm_predict([1]*len(X), X, model ,'-b 1')
+		
+		# class probability
+		# _, _, p_vals = predict([1]*len(X), X, model ,'-b 1')
+
+		# decision function with liblinear
+		# _, _, p_vals = predict([1]*len(X), X, model)
+		# p_vals_adopt = [p[0] for p in p_vals]
+
+		# decision function with sklearn svc
+		p_vals_adopt = clf_t.decision_function(X)
+		p_vals_avg += p_vals_adopt
+
+		# decision function with sklearn random forest
+		# p_vals = clf_t.predict_proba(X)
+		# p_vals_adopt = [p[1] for p in p_vals]
+
+	cand_prob_list = zip(cand_user,p_vals_avg)
+
+	adopters_vec = [w for w,_ in nlargest(N,cand_prob_list,key=lambda x: x[1])]
+	# if adopters_vec!=adopters_vec_kdtree:
+	# 	print "not same points", "same", len(set(adopters_vec)&set(adopters_vec_kdtree)), "out of", N
+	# else:
+	# 	print "same"
 	precision_k = 0.0
 	num_hits = 0.0
 	for k,p in enumerate(adopters_vec):
@@ -388,16 +560,41 @@ for i in seq_random_index:
 	# prec_r = num_hits/M
 	prec_k = num_hits/N
 	rec_k = num_hits/M
-	print "Avg precision", average_precision, "users not found", not_found, "adopters in seq", len(seq_sample_vocab)
+	print "Avg precision", average_precision, "users not found", not_found, "adopters in seq", len(seq_sample_vocab), "cc", cc
 	# print "RPrecision", prec_r
 	print "Precision", prec_k, "Recall", rec_k
 	mean_ap+=average_precision
 	# mean_prec_r+=prec_r
 	mean_prec_k+=prec_k
 	mean_rec_k+=rec_k
-	print "MAP", mean_ap/float(num_seqs), "MPk", mean_prec_k/float(num_seqs), "MRk", mean_rec_k/float(num_seqs)
+	print "MAP", mean_ap/float(num_seqs), "MPk", mean_prec_k/float(num_seqs), "MRk", mean_rec_k/float(num_seqs), "cc", cand_cov*1./num_seqs
 	#, "MRP", mean_prec_r/float(num_seqs)
 	
+	#precision, recall evaluation, user vectors, min
+	adopters_vec_min = get_Nranked_list_kdtree(init_adopters,N)
+	# # adopters_min_cand = [w for w,_ in nsmallest(N,zip(cand_user,[x[0] for x in X]),key=lambda x: x[1])]
+	# if adopters_vec_min!=adopters_min_cand:
+	# 	print "not same points", "same", len(set(adopters_vec_min)&set(adopters_min_cand)), "out of", N
+	# else:
+	# 	print "same"
+	precision_k_min = 0.0
+	num_hits_min = 0.0
+	for k,p in enumerate(adopters_vec_min):
+		if p in seq_sample_vocab:
+			num_hits_min+=1.0
+			precision_k_min += num_hits_min/(k+1.0)
+	average_precision_min = precision_k_min/min(M,N)
+	# prec_r_min = num_hits_min/M
+	prec_k_min = num_hits_min/N
+	rec_k_min = num_hits_min/M
+	print "min", "Avg precision", average_precision_min, "Precision", prec_k_min, "Recall", rec_k_min
+	# print "RPrecision", prec_r
+	mean_ap_min+=average_precision_min
+	# mean_prec_r_min+=prec_r_min
+	mean_prec_k_min+=prec_k_min
+	mean_rec_k_min+=rec_k_min
+	print "min", "MAP", mean_ap_min/float(num_seqs), "MPk", mean_prec_k_min/float(num_seqs), "MRk", mean_rec_k_min/float(num_seqs)
+
 	#number of hashtags adopted in training baseline
 	nb = []
 	nb_num = 0
@@ -456,7 +653,7 @@ for i in seq_random_index:
 	seq_count_limit-=1
 	if seq_count_limit==0:
 		break
-print "number of seq considered", num_seqs
+print "number of seq considered", num_seqs, "cc", cand_cov*1./num_seqs
 print "MAP", "user vectors", mean_ap/float(num_seqs), "Nb_App", mean_ap_nbapp/float(num_seqs), "Fol", mean_ap_fol/float(num_seqs)
 # print "MRP", mean_prec_r/float(num_seqs), mean_prec_r_nbapp/float(num_seqs), mean_prec_r_fol/float(num_seqs)
 print "MPk", mean_prec_k/float(num_seqs), mean_prec_k_nbapp/float(num_seqs), mean_prec_k_fol/float(num_seqs), "MRk", mean_rec_k/float(num_seqs), mean_rec_k_nbapp/float(num_seqs), mean_rec_k_fol/float(num_seqs)
@@ -467,4 +664,4 @@ def print_stats(res):
 print "MAP", print_stats(ap_total)
 print "MPk", print_stats(prec_k_total)
 print "MRk", print_stats(rec_k_total)
-print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k, norm_vec
+print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k

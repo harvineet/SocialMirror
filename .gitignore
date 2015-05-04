@@ -10,6 +10,7 @@ tweets_repository/Nov2013/tokenizer/
 histogram_of_counts/kmeans/
 histogram_of_counts/tsne_python/textSNE-master/
 degree_distribution/libsvm-3.20/
+degree_distribution/liblinear-1.96/
 !*.py
 !/*.py
 !*.bat
