@@ -31,8 +31,8 @@ train_ex_limit = 500
 norm_vec = True
 # clf = LinearSVC(penalty='l2', loss='squared_hinge', dual=False, C=1.0, class_weight=None)
 # clf = SVC(C=1.0, kernel='rbf', shrinking=True, probability=False, tol=0.001, cache_size=8000, class_weight=None, max_iter=-1)
-# clf = RandomForestClassifier(n_estimators=100, n_jobs=10, class_weight='auto')
-clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, class_weight=None, max_iter=100)
+clf = RandomForestClassifier(n_estimators=500, n_jobs=10, class_weight=None)
+# clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, class_weight=None, max_iter=100)
 
 # training_options='-s 0 -t 2 -b 1 -m 8000'
 print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k, cand_size_factor, train_ex_limit
@@ -411,7 +411,7 @@ with open("adopter_pred_files/sequence_file_split_indices_weight_n40.pickle","wb
 	pickle.dump(train_seq_id_weight,fd)
 	pickle.dump(test_seq_id_weight,fd)
 """
-with open("adopter_pred_files/sequence_file_split_indices_weight_n10.pickle","rb") as fr:
+with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/sequence_file_split_indices_weight_n10.pickle","rb") as fr:
 	train_seq_id_weight = pickle.load(fr)
 	test_seq_id_weight = pickle.load(fr)
 """
@@ -460,6 +460,8 @@ with open("adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
 
 #train using sklearn
 clf.fit(train_X, train_Y)
+with open("adopter_pred_files/model_n10_rf_t500.pickle","wb") as fd:
+	pickle.dump(clf,fd)
 print clf.get_params()
 
 cand_cov = 0.0

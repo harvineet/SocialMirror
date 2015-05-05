@@ -34,8 +34,8 @@ norm_vec = True
 def init_clf():
 	# clf = LinearSVC(penalty='l2', loss='squared_hinge', dual=False, C=1.0, class_weight=None)
 	# clf = SVC(C=1.0, kernel='rbf', shrinking=True, probability=False, tol=0.001, cache_size=2000, class_weight=None, max_iter=-1)
-	# clf = RandomForestClassifier(n_estimators=300, n_jobs=10, class_weight=None)
-	clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, class_weight=None, max_iter=100)
+	clf = RandomForestClassifier(n_estimators=500, n_jobs=20, class_weight=None)
+	# clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, class_weight=None, max_iter=100)
 	return clf
 
 # training_options='-s 0 -t 2 -b 1 -m 8000'
@@ -415,52 +415,52 @@ with open("adopter_pred_files/sequence_file_split_indices_weight_n40.pickle","wb
 	pickle.dump(train_seq_id_weight,fd)
 	pickle.dump(test_seq_id_weight,fd)
 """
-with open("adopter_pred_files/sequence_file_split_indices_weight_n10.pickle","rb") as fr:
+with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/sequence_file_split_indices_weight_n10.pickle","rb") as fr:
 	train_seq_id_weight = pickle.load(fr)
 	test_seq_id_weight = pickle.load(fr)
 
-# train_X = []
-# train_Y = []
-l=0
-models = []
-for i in train_seq_id_weight:
-	"""
-	seq_sample_vocab = tag_seq[i]
-	init_adopters=seq_sample_vocab[0:num_init_adopters]
-	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
-	M = len(seq_sample_vocab)
-	N = top_k #1000 #M #num_users
-	X, Y, _,cc = get_cand_feature_vectors(init_adopters, seq_sample_vocab, N)
-	# train_X+=X
-	# train_Y+=Y
-	cand_cov+=cc
-	with open("adopter_pred_files/topicwise_train_files/train_file_n10_"+str(l)+".pickle","wb") as fd:
-		pickle.dump(X,fd)
-		pickle.dump(Y,fd)
-	"""
-	with open("adopter_pred_files/topicwise_train_files/train_file_n10_"+str(l)+".pickle","rb") as fr:
-		X = pickle.load(fr)
-		Y = pickle.load(fr)
+# # train_X = []
+# # train_Y = []
+# l=0
+# models = []
+# for i in train_seq_id_weight:
+# 	"""
+# 	seq_sample_vocab = tag_seq[i]
+# 	init_adopters=seq_sample_vocab[0:num_init_adopters]
+# 	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
+# 	M = len(seq_sample_vocab)
+# 	N = top_k #1000 #M #num_users
+# 	X, Y, _,cc = get_cand_feature_vectors(init_adopters, seq_sample_vocab, N)
+# 	# train_X+=X
+# 	# train_Y+=Y
+# 	cand_cov+=cc
+# 	with open("adopter_pred_files/topicwise_train_files/train_file_n10_"+str(l)+".pickle","wb") as fd:
+# 		pickle.dump(X,fd)
+# 		pickle.dump(Y,fd)
+# 	"""
+# 	with open("adopter_pred_files/topicwise_train_files/train_file_n10_"+str(l)+".pickle","rb") as fr:
+# 		X = pickle.load(fr)
+# 		Y = pickle.load(fr)
 
-	#re-initialise
-	clf_t = init_clf()
-	clf_t.fit(X, Y)
+# 	#re-initialise
+# 	clf_t = init_clf()
+# 	clf_t.fit(X, Y)
 
-	# with open("adopter_pred_files/topicwise_models/train_file_n10_"+str(l)+".pickle","wb") as fd:
-	# 	pickle.dump(clf_t,fd)
+# 	# with open("adopter_pred_files/topicwise_models/train_file_n10_"+str(l)+".pickle","wb") as fd:
+# 	# 	pickle.dump(clf_t,fd)
 
-	models.append(clf_t)
-	l+=1
-	if l%20==0:
-		print "example num", l
-	if l==train_ex_limit:
-		break
-print "training examples taken", l, "avg candidate set recall", cand_cov*1./l
-# with open("adopter_pred_files/train_file_weight_c1_n40.pickle","wb") as fd:
-# 	pickle.dump(train_X,fd)
-# 	pickle.dump(train_Y,fd)
-with open("adopter_pred_files/topicwise_models/train_file_n10_lr_aggr.pickle","wb") as fd:
-	pickle.dump(models,fd)
+# 	models.append(clf_t)
+# 	l+=1
+# 	if l%20==0:
+# 		print "example num", l
+# 	if l==train_ex_limit:
+# 		break
+# print "training examples taken", l, "avg candidate set recall", cand_cov*1./l
+# # with open("adopter_pred_files/train_file_weight_c1_n40.pickle","wb") as fd:
+# # 	pickle.dump(train_X,fd)
+# # 	pickle.dump(train_Y,fd)
+# with open("adopter_pred_files/topicwise_models/train_file_n10_rf_aggr.pickle","wb") as fd:
+# 	pickle.dump(models,fd)
 """
 with open("adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
 	train_X = pickle.load(fr)
@@ -486,12 +486,15 @@ with open("adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
 # clf.fit(train_X, train_Y)
 # print clf.get_params()
 """
-models = []
-for l in range(0,train_ex_limit):
-	with open("adopter_pred_files/topicwise_models/train_file_n10_"+str(l)+".pickle","rb") as fr:
-		clf_t = pickle.load(fr)
-	models.append(clf_t)
+# models = []
+# for l in range(0,train_ex_limit):
+# 	with open("adopter_pred_files/topicwise_models/train_file_n10_"+str(l)+".pickle","rb") as fr:
+# 		clf_t = pickle.load(fr)
+# 	models.append(clf_t)
 """
+with open("adopter_pred_files/topicwise_models/train_file_n10_lr_aggr.pickle","rb") as fr:
+	models = pickle.load(fr)
+
 cand_cov = 0.0
 for i in test_seq_id_weight:
 	seq_sample_vocab = tag_seq[i]
@@ -519,12 +522,14 @@ for i in test_seq_id_weight:
 		# p_vals_adopt = [p[0] for p in p_vals]
 
 		# decision function with sklearn svc
-		p_vals_adopt = clf_t.decision_function(X)
-		p_vals_avg += p_vals_adopt
+		# p_vals_adopt = clf_t.decision_function(X)
 
 		# decision function with sklearn random forest
-		# p_vals = clf_t.predict_proba(X)
-		# p_vals_adopt = [p[1] for p in p_vals]
+		p_vals = clf_t.predict_proba(X)
+		p_vals_adopt = numpy.asarray([p[1] for p in p_vals])
+
+		# p_vals_avg += p_vals_adopt
+		p_vals_avg = numpy.maximum(p_vals_avg, p_vals_adopt)
 
 	cand_prob_list = zip(cand_user,p_vals_avg)
 

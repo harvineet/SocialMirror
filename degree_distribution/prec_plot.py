@@ -1,10 +1,11 @@
 #plot MAP, precision, recall at k for different k in single tag case and averaged over 100 tags
+#plot precision at k and R for individual topics with learned weights
 
 from collections import defaultdict
 import cPickle as pickle
 import numpy as np
 import matplotlib.pyplot as plt
-
+"""
 top_k = [25,50]+range(100,1001,100) #[100,200,300]+range(500,5001,500)
 
 def eval_plot(vec,nbapp,fol,ylab,title):
@@ -53,3 +54,22 @@ with open("prec_plot_k.pickle","rb") as fr:
 	reck = pickle.load(fr)
 	vec,nbapp,fol = average(mapk)
 	eval_plot(vec,nbapp,fol,'Precision at k','Precision@k values at different k')
+"""
+num_bin = 50
+def eval_plot(eval,rec,xlab):
+	plt.hist(eval, num_bin)
+	# plt.bar(range(1,len(eval)+1), eval)
+	# plt.bar(range(1,len(rec)+1), rec)
+	plt.xlabel(xlab)
+	plt.ylabel('Frequency')
+	plt.title('Histogram of Prec@10 for 100 topics')
+	plt.grid()
+	plt.show()
+
+with open("mean_precision_n10_rf_prec10.pickle","rb") as fr:
+	prec_k_total = pickle.load(fr)
+	cand_set_recall = pickle.load(fr)
+	cand_set_size_list = pickle.load(fr)
+
+print sum(cand_set_size_list)
+eval_plot(list(prec_k_total),list(cand_set_size_list),'Precision@k')

@@ -1,7 +1,8 @@
-#get nearest users to the initial adopters of a hashtag sequence in test sequences using user vectors,
-#rank based on learned weighted sum of distances of candidates from initial adopters and compare with actual adopters in the sequence
-#train and test model on each topic in training
+#visualising users in the candidate set of initial adopters for a particular hashtag using t-SNE on user vectors
 
+import matplotlib
+matplotlib.use('Agg')
+from tsne import *
 import cPickle as pickle
 import time
 from math import sqrt
@@ -11,10 +12,7 @@ import numpy
 # from scipy.spatial import cKDTree as KDTree
 from sklearn.neighbors import NearestNeighbors
 import sys
-# sys.path.append('libsvm-3.20/python')
-# from svmutil import *
-# sys.path.append('liblinear-1.96/python')
-# from liblinearutil import *
+
 from sklearn.svm import LinearSVC, SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -24,15 +22,11 @@ vec_file = "/mnt/filer01/word2vec/node_vectors_1hr_pr.txt"
 nb_sorted_pickle = "/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/baseline_user_order_1hr_pr.pickle"
 adoption_sequence_filename = "/mnt/filer01/word2vec/degree_distribution/hashtagAdoptionSequences.txt" #"sample_sequences"
 num_init_adopters = 10
-par_m = 8
-metric_Hausdorff_m_avg = 0
 top_k = 1000
 seq_len_threshold = top_k #500
 cand_size_factor = 1
-train_ex_limit = 100
+train_ex_limit = 3
 norm_vec = True
-cv_fold = 5
-top_k_test = 10
 
 def init_clf():
 	# clf = LinearSVC(penalty='l2', loss='squared_hinge', dual=False, C=1.0, class_weight=None)
@@ -42,7 +36,7 @@ def init_clf():
 	return clf
 
 # training_options='-s 0 -t 2 -b 1 -m 8000'
-print vec_file, num_init_adopters, metric_Hausdorff_m_avg, top_k, cand_size_factor, train_ex_limit, top_k_test
+print vec_file, num_init_adopters, top_k, cand_size_factor, train_ex_limit
 
 with open("/mnt/filer01/word2vec/degree_distribution/sequence_file_split_indices.pickle","rb") as fr:
 	_ = pickle.load(fr)
@@ -63,18 +57,22 @@ def read_vector_file(path_vectors_file):
 				print "vector length error"
 			word = int(u[0])
 			#normalise to length 1
-			vec = []
-			length = 0.0
-			for d in u[1:]:
-				num=float(d)
-				vec.append(num)
-				length+=num**2
-			#vec = map(float,u[1:])
-			#length = sum(x**2 for x in vec)
-			length = sqrt(length)
-			vec_norm = [x/length for x in vec]
+			if norm_vec:
+				vec = []
+				length = 0.0
+				for d in u[1:]:
+					num=float(d)
+					vec.append(num)
+					length+=num**2
+				#vec = map(float,u[1:])
+				#length = sum(x**2 for x in vec)
+				length = sqrt(length)
+				vec_norm = [x/length for x in vec]
+				vectors.append(vec_norm)
+			else:
+				vec = map(float,u[1:])
+				vectors.append(vec)
 			vocab.append(word)
-			vectors.append(vec_norm)
 	return vectors, vocab, word_vector_dim
 
 vec,vocab,dim = read_vector_file(vec_file)
@@ -85,7 +83,7 @@ num_users = len(vocab)
 print "num users in train sequences", num_users
 # print "users removed from vocab", len(set(users_train)-set(vocab))
 # print "users in test sequences but not in vocab", len(users_test-set(vocab))
-
+"""
 # building kd-tree
 tic = time.clock()
 # kd = KDTree(vec, leafsize=10)
@@ -144,6 +142,7 @@ def get_cand_feature_vectors(query_set,next_adopters,N):
 not_found_vocab=[]
 # source_thr = 1395858601 + 12*60*60
 # non_emergent_tags = pickle.load(open("/mnt/filer01/word2vec/degree_distribution/nonEmergentHashtags.pickle","rb"))
+
 tag_seq = []
 count=0
 # nb_seq = dict()
@@ -196,10 +195,7 @@ with open(adoption_sequence_filename, "rb") as fr:
 
 print len(tag_seq),len(test_seq_id),count
 print sum(not_found_vocab)/float(len(not_found_vocab)),max(not_found_vocab),min(not_found_vocab)
-
-prec_k_total = []
-cand_set_recall = []
-cand_set_size_list = []
+"""
 cand_cov = 0.0
 
 """
@@ -232,9 +228,15 @@ with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/sequence
 	train_seq_id_weight = pickle.load(fr)
 	test_seq_id_weight = pickle.load(fr)
 
-# train_X = []
-# train_Y = []
+with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
+	train_X = pickle.load(fr)
+	train_Y = pickle.load(fr)
+clf = init_clf()
+clf.fit(train_X, train_Y)
+print clf.get_params()
+
 l=0
+tag_val = []
 for i in train_seq_id_weight:
 	"""
 	seq_sample_vocab = tag_seq[i]
@@ -249,56 +251,32 @@ for i in train_seq_id_weight:
 	X = numpy.asarray(X)
 	Y = numpy.asarray(Y)
 	# cand_user = numpy.asarray(cand_user)
-	with open("adopter_pred_files/single_topic_train_test_files/train_file_n10_"+str(l)+".pickle","wb") as fd:
+	with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_vis/train_file_n10_"+str(l)+".pickle","wb") as fd:
 		pickle.dump(X,fd)
 		pickle.dump(Y,fd)
+		pickle.dump(cand_user,fd)
+		pickle.dump(init_adopters,fd)
 	"""
-	with open("adopter_pred_files/single_topic_train_test_files/train_file_n10_"+str(l)+".pickle","rb") as fr:
+	with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_vis/train_file_n10_"+str(l)+".pickle","rb") as fr:
 		X = pickle.load(fr)
 		Y = pickle.load(fr)
+		cand_user = pickle.load(fr)
+		init_adopters = pickle.load(fr)
 	cc=0
-	cand_set_size = len(X)
 
-	precision_k = 0.0
-	#cross-validation, random split
-	kf = KFold(cand_set_size, n_folds=cv_fold, shuffle=True)
-	for train_ind,test_ind in kf:
-		train_X, test_X = X[train_ind], X[test_ind]
-		train_Y, test_Y = Y[train_ind], Y[test_ind]
+	N = 50
+	p_vals = clf.predict_proba(X)
+	cls_ind = list(clf.classes_).index(1)
+	p_vals_adopt = [p[cls_ind] for p in p_vals]
 
-		# test_cand_user = cand_user[test_ind]
-		test_adopt_ind = [ind for ind,val in enumerate(test_Y) if val==1]
-		num_adopt = len(test_adopt_ind)
-		#re-initialise
-		clf_t = init_clf()
-		clf_t.fit(train_X, train_Y)
+	cand_prob_list = zip(cand_user,p_vals_adopt)
 
-		# p_vals_adopt = clf_t.decision_function(test_X)
-		p_vals = clf_t.predict_proba(test_X)
-		p_vals_adopt = [p[1] for p in p_vals]
+	adopters_vec = [w for w,_ in nlargest(N,cand_prob_list,key=lambda x: x[1])]
 
-		cand_prob_list = zip(range(0,len(test_X)),p_vals_adopt)
-		
-		#precision at k
-		# pred_adopters = [w for w,_ in nlargest(top_k_test,cand_prob_list,key=lambda x: x[1])]
-		# prec_k_cv = len(set(test_adopt_ind)&set(pred_adopters))*1./top_k_test
+	# clf_t = init_clf()
+	# clf_t.fit(X, Y)
+	tag_val.append((init_adopters,zip(cand_user,Y),adopters_vec))
 
-		#precision at R
-		pred_adopters = [w for w,_ in nlargest(num_adopt,cand_prob_list,key=lambda x: x[1])]
-		if num_adopt!=0:
-			prec_k_cv = len(set(test_adopt_ind)&set(pred_adopters))*1./num_adopt
-		else:
-			prec_k_cv = 0
-
-		print "precision", prec_k_cv, "num adopters in test", num_adopt, len(test_Y)
-		precision_k += prec_k_cv
-
-	precision_k = precision_k*1./cv_fold
-	prec_k_total.append(precision_k)
-	cand_set_recall.append(cc)
-	cand_set_size_list.append(cand_set_size)
-
-	print "Avg precision", precision_k, "precision total", sum(prec_k_total)*1./(l+1), "cc", cc
 	l+=1
 	if l%20==0:
 		print "example num", l
@@ -306,11 +284,75 @@ for i in train_seq_id_weight:
 		break
 print "training examples taken", l, "avg candidate set recall", cand_cov*1./l
 
-def print_stats(u):
-	return [numpy.mean(u), numpy.std(u), numpy.median(u)]
-print "Precision", print_stats(prec_k_total)
-with open("adopter_pred_files/single_topic_train_test_files/mean_precision_n10_lr_precR.pickle","wb") as fd:
-	pickle.dump(prec_k_total,fd)
-	pickle.dump(cand_set_recall,fd)
-	pickle.dump(cand_set_size_list,fd)
-print vec_file, num_init_adopters, metric_Hausdorff_m_avg, top_k
+vec_limit = 500
+def get_user_vectors(t):
+	init_adopters,cand,adopt = tag_val[t]
+	adopt = set(adopt)
+	vectors = []
+	color = []
+	count=0
+	for u in init_adopters:
+		vectors.append(vec[vocab_index[u]])
+		color.append(0)
+	random.shuffle(cand)
+	for u,y in cand:
+		vectors.append(vec[vocab_index[u]])
+		if y==1:
+			if u not in adopt:
+				color.append(1)
+			else:
+				color.append(3)
+		else:
+			if u in adopt:
+				color.append(4)
+			else:
+				color.append(2)
+
+		count+=1
+		if count==vec_limit:
+			break
+	return numpy.array(vectors), color
+
+def save_embed_plot((X,color),fname):
+	Y = tsne(X, no_dims = 2, initial_dims = 50, perplexity = 30.0)
+	# with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_vis/"+fname+".pickle","wb") as fd:
+	# 	pickle.dump(Y,fd)
+	fig = Plot.figure()
+	init = []
+	adopt = []
+	rest = []
+	mis = []
+	cor = []
+	for i,c in enumerate(color):
+		if c==0:
+			init.append(i)
+		elif c==1:
+			adopt.append(i)
+		elif c==2:
+			rest.append(i)
+		elif c==3:
+			cor.append(i)
+		else:
+			mis.append(i)
+	Y_init = Y[init]
+	Y_adopt = Y[adopt]
+	Y_rest = Y[rest]
+	Y_cor = Y[cor]
+	Y_mis = Y[mis]
+	Plot.scatter(Y_init[:,0], Y_init[:,1], s=16, c='r', alpha=1.0, label = 'initial adopters')
+	Plot.scatter(Y_adopt[:,0], Y_adopt[:,1], s=12, c='b', alpha=1.0, label = 'adopters')
+	Plot.scatter(Y_rest[:,0], Y_rest[:,1], s=10, c='c', alpha=0.4, label = 'non-adopters')
+	Plot.scatter(Y_cor[:,0], Y_cor[:,1], s=12, c='g', alpha=1.0, label = 'correctly pred')
+	Plot.scatter(Y_mis[:,0], Y_mis[:,1], s=12, c='k', alpha=1.0, label = 'incorrectly pred')
+	Plot.axis('off')
+	Plot.legend(prop={'size':10})
+	fig.savefig(fname, dpi=400, bbox_inches='tight')
+	
+if __name__ == "__main__":
+	print "Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset."
+	for i in range(0,train_ex_limit):
+		save_embed_plot(get_user_vectors(i),'embed_adopters_topic_'+str(i)+'_pred.png')
+
+#cc 0.0589, candidate set recall 280 out of 4751 cand size 6312
+#cc 0.219, candidate set recall 516 out of 2347 cand size 4702
+#cc 0.56, candidate set recall 658 out of 1162 cand size 4075

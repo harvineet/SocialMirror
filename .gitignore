@@ -11,6 +11,7 @@ histogram_of_counts/kmeans/
 histogram_of_counts/tsne_python/textSNE-master/
 degree_distribution/libsvm-3.20/
 degree_distribution/liblinear-1.96/
+histogram_of_counts/tsne_python/bh_tsne/
 !*.py
 !/*.py
 !*.bat
