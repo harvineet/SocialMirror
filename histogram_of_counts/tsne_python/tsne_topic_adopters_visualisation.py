@@ -25,7 +25,7 @@ num_init_adopters = 10
 top_k = 1000
 seq_len_threshold = top_k #500
 cand_size_factor = 1
-train_ex_limit = 3
+train_ex_limit = 50
 norm_vec = True
 
 def init_clf():
@@ -83,7 +83,7 @@ num_users = len(vocab)
 print "num users in train sequences", num_users
 # print "users removed from vocab", len(set(users_train)-set(vocab))
 # print "users in test sequences but not in vocab", len(users_test-set(vocab))
-"""
+
 # building kd-tree
 tic = time.clock()
 # kd = KDTree(vec, leafsize=10)
@@ -144,6 +144,7 @@ not_found_vocab=[]
 # non_emergent_tags = pickle.load(open("/mnt/filer01/word2vec/degree_distribution/nonEmergentHashtags.pickle","rb"))
 
 tag_seq = []
+tag_name = []
 count=0
 # nb_seq = dict()
 # adlen = []
@@ -172,6 +173,7 @@ with open(adoption_sequence_filename, "rb") as fr:
 					not_found.add(author)
 			if len(seq)>num_init_adopters:
 				tag_seq.append(seq)
+				tag_name.append(u[0])
 				not_found_vocab.append(len(not_found))
 				# adlen.append(len(seq))
 		# elif count not in test_seq_id:
@@ -195,7 +197,7 @@ with open(adoption_sequence_filename, "rb") as fr:
 
 print len(tag_seq),len(test_seq_id),count
 print sum(not_found_vocab)/float(len(not_found_vocab)),max(not_found_vocab),min(not_found_vocab)
-"""
+
 cand_cov = 0.0
 
 """
@@ -228,17 +230,21 @@ with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/sequence
 	train_seq_id_weight = pickle.load(fr)
 	test_seq_id_weight = pickle.load(fr)
 
-with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
-	train_X = pickle.load(fr)
-	train_Y = pickle.load(fr)
-clf = init_clf()
-clf.fit(train_X, train_Y)
-print clf.get_params()
+# with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
+# 	train_X = pickle.load(fr)
+# 	train_Y = pickle.load(fr)
+# clf = init_clf()
+# clf.fit(train_X, train_Y)
+# print clf.get_params()
+
+with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_train_test_files/mean_precision_n10_rf.pickle","rb") as fr:
+	prec_k_total = pickle.load(fr)
 
 l=0
 tag_val = []
 for i in train_seq_id_weight:
-	"""
+
+	tag = tag_name[i]
 	seq_sample_vocab = tag_seq[i]
 	init_adopters=seq_sample_vocab[0:num_init_adopters]
 	seq_sample_vocab = set(seq_sample_vocab[num_init_adopters:])
@@ -251,11 +257,13 @@ for i in train_seq_id_weight:
 	X = numpy.asarray(X)
 	Y = numpy.asarray(Y)
 	# cand_user = numpy.asarray(cand_user)
+	prec = round(prec_k_total[l],4)
 	with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_vis/train_file_n10_"+str(l)+".pickle","wb") as fd:
 		pickle.dump(X,fd)
 		pickle.dump(Y,fd)
 		pickle.dump(cand_user,fd)
 		pickle.dump(init_adopters,fd)
+		pickle.dump(tag,fd)
 	"""
 	with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_vis/train_file_n10_"+str(l)+".pickle","rb") as fr:
 		X = pickle.load(fr)
@@ -263,19 +271,10 @@ for i in train_seq_id_weight:
 		cand_user = pickle.load(fr)
 		init_adopters = pickle.load(fr)
 	cc=0
-
-	N = 50
-	p_vals = clf.predict_proba(X)
-	cls_ind = list(clf.classes_).index(1)
-	p_vals_adopt = [p[cls_ind] for p in p_vals]
-
-	cand_prob_list = zip(cand_user,p_vals_adopt)
-
-	adopters_vec = [w for w,_ in nlargest(N,cand_prob_list,key=lambda x: x[1])]
-
+	"""
 	# clf_t = init_clf()
 	# clf_t.fit(X, Y)
-	tag_val.append((init_adopters,zip(cand_user,Y),adopters_vec))
+	tag_val.append((init_adopters,zip(cand_user,Y),tag,prec))
 
 	l+=1
 	if l%20==0:
@@ -284,10 +283,9 @@ for i in train_seq_id_weight:
 		break
 print "training examples taken", l, "avg candidate set recall", cand_cov*1./l
 
-vec_limit = 500
+vec_limit = 1000
 def get_user_vectors(t):
-	init_adopters,cand,adopt = tag_val[t]
-	adopt = set(adopt)
+	init_adopters,cand,tag,prec = tag_val[t]
 	vectors = []
 	color = []
 	count=0
@@ -298,60 +296,44 @@ def get_user_vectors(t):
 	for u,y in cand:
 		vectors.append(vec[vocab_index[u]])
 		if y==1:
-			if u not in adopt:
-				color.append(1)
-			else:
-				color.append(3)
+			color.append(1)
 		else:
-			if u in adopt:
-				color.append(4)
-			else:
-				color.append(2)
-
+			color.append(2)
 		count+=1
 		if count==vec_limit:
 			break
-	return numpy.array(vectors), color
+	return numpy.array(vectors), color, tag, prec
 
-def save_embed_plot((X,color),fname):
+def save_embed_plot((X,color,tag,prec),fname):
 	Y = tsne(X, no_dims = 2, initial_dims = 50, perplexity = 30.0)
-	# with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_vis/"+fname+".pickle","wb") as fd:
-	# 	pickle.dump(Y,fd)
+	with open("/mnt/filer01/word2vec/degree_distribution/adopter_pred_files/single_topic_vis/"+fname+".pickle","wb") as fd:
+		pickle.dump(Y,fd)
 	fig = Plot.figure()
 	init = []
 	adopt = []
 	rest = []
-	mis = []
-	cor = []
 	for i,c in enumerate(color):
 		if c==0:
 			init.append(i)
 		elif c==1:
 			adopt.append(i)
-		elif c==2:
-			rest.append(i)
-		elif c==3:
-			cor.append(i)
 		else:
-			mis.append(i)
+			rest.append(i)
 	Y_init = Y[init]
 	Y_adopt = Y[adopt]
 	Y_rest = Y[rest]
-	Y_cor = Y[cor]
-	Y_mis = Y[mis]
-	Plot.scatter(Y_init[:,0], Y_init[:,1], s=16, c='r', alpha=1.0, label = 'initial adopters')
-	Plot.scatter(Y_adopt[:,0], Y_adopt[:,1], s=12, c='b', alpha=1.0, label = 'adopters')
-	Plot.scatter(Y_rest[:,0], Y_rest[:,1], s=10, c='c', alpha=0.4, label = 'non-adopters')
-	Plot.scatter(Y_cor[:,0], Y_cor[:,1], s=12, c='g', alpha=1.0, label = 'correctly pred')
-	Plot.scatter(Y_mis[:,0], Y_mis[:,1], s=12, c='k', alpha=1.0, label = 'incorrectly pred')
+	Plot.scatter(Y_init[:,0], Y_init[:,1], s=20, c='r', alpha=0.8, label = 'initial adopters', edgecolor='none')
+	Plot.scatter(Y_adopt[:,0], Y_adopt[:,1], s=12, c='b', alpha=0.8, label = 'adopters', edgecolor='none')
+	Plot.scatter(Y_rest[:,0], Y_rest[:,1], s=10, c='c', alpha=0.4, label = 'non-adopters', edgecolor='none')
 	Plot.axis('off')
-	Plot.legend(prop={'size':10})
-	fig.savefig(fname, dpi=400, bbox_inches='tight')
+	Plot.legend(prop={'size':8})
+	Plot.title('#'+tag+', P@100: '+str(prec))
+	fig.savefig(fname+'.png', dpi=400, bbox_inches='tight')
 	
 if __name__ == "__main__":
 	print "Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset."
 	for i in range(0,train_ex_limit):
-		save_embed_plot(get_user_vectors(i),'embed_adopters_topic_'+str(i)+'_pred.png')
+		save_embed_plot(get_user_vectors(i),'embed_adopters_topic_'+str(i))
 
 #cc 0.0589, candidate set recall 280 out of 4751 cand size 6312
 #cc 0.219, candidate set recall 516 out of 2347 cand size 4702

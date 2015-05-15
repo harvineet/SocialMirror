@@ -31,8 +31,8 @@ train_ex_limit = 500
 norm_vec = True
 # clf = LinearSVC(penalty='l2', loss='squared_hinge', dual=False, C=1.0, class_weight=None)
 # clf = SVC(C=1.0, kernel='rbf', shrinking=True, probability=False, tol=0.001, cache_size=8000, class_weight=None, max_iter=-1)
-clf = RandomForestClassifier(n_estimators=500, n_jobs=10, class_weight=None)
-# clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, class_weight=None, max_iter=100)
+# clf = RandomForestClassifier(n_estimators=500, n_jobs=10, class_weight=None)
+clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, class_weight=None, max_iter=100)
 
 # training_options='-s 0 -t 2 -b 1 -m 8000'
 print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k, cand_size_factor, train_ex_limit
@@ -384,6 +384,7 @@ ap_total = []
 prec_k_total = []
 rec_k_total = []
 cand_cov = 0.0
+cand_set_recall = []
 
 """
 #test sequences in random order
@@ -460,7 +461,7 @@ with open("adopter_pred_files/train_file_weight_c1_n10.pickle","rb") as fr:
 
 #train using sklearn
 clf.fit(train_X, train_Y)
-with open("adopter_pred_files/model_n10_rf_t500.pickle","wb") as fd:
+with open("adopter_pred_files/model_n10_lr.pickle","wb") as fd:
 	pickle.dump(clf,fd)
 print clf.get_params()
 
@@ -604,6 +605,7 @@ for i in test_seq_id_weight:
 	# prec_r_total.append((
 	prec_k_total.append((prec_k,prec_k_nbapp,prec_k_fol))
 	rec_k_total.append((rec_k,rec_k_nbapp,rec_k_fol))
+	cand_set_recall.append(cc)
 
 	seq_count_limit-=1
 	if seq_count_limit==0:
@@ -619,4 +621,9 @@ def print_stats(res):
 print "MAP", print_stats(ap_total)
 print "MPk", print_stats(prec_k_total)
 print "MRk", print_stats(rec_k_total)
+with open("adopter_pred_files/eval_n10_lr.pickle","wb") as fd:
+	pickle.dump(ap_total,fd)
+	pickle.dump(prec_k_total,fd)
+	pickle.dump(rec_k_total,fd)
+	pickle.dump(cand_set_recall,fd)
 print vec_file, num_init_adopters, metric_Hausdorff_m_avg, par_m, top_k

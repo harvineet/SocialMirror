@@ -1,6 +1,44 @@
 <html>
 <body>
 
+<h3> Visualisation of candidate set for individual topics (with model predictions)</h3>
+True positives ('green') correspond to candidates correctly predicted as adopters by the learned model and False negatives ('blue') correspond to adopters that were incorrectly predicted as non-adopters.
+Topics with high Precision@k (on 5-fold cross-validation on individual topics)</br>
+<img src="plots/candidate_set_pred/embed_adopters_topic_42.png" width="800" height="600" />
+<img src="plots/candidate_set_pred/embed_adopters_topic_21.png" width="800" height="600" />
+<img src="plots/candidate_set_pred/embed_adopters_topic_10.png" width="800" height="600" />
+<img src="plots/candidate_set_pred/embed_adopters_topic_23.png" width="800" height="600" />
+</br>
+Topics with low Precision@k (on 5-fold cross-validation on individual topics)</br>
+<img src="plots/candidate_set_pred/embed_adopters_topic_31.png" width="800" height="600" />
+<img src="plots/candidate_set_pred/embed_adopters_topic_3.png" width="800" height="600" />
+<img src="plots/candidate_set_pred/embed_adopters_topic_34.png" width="800" height="600" />
+<img src="plots/candidate_set_pred/embed_adopters_topic_32.png" width="800" height="600" />
+</br>
+<a href="cand_vis.html">Other plots</a>
+
+<h3> Visualisation of candidate set for individual topics</h3>
+Topics with high Precision@k (on 5-fold cross-validation on individual topics)</br>
+<img src="plots/candidate_set/embed_adopters_topic_42.png" width="800" height="600" />
+<img src="plots/candidate_set/embed_adopters_topic_21.png" width="800" height="600" />
+<img src="plots/candidate_set/embed_adopters_topic_10.png" width="800" height="600" />
+<img src="plots/candidate_set/embed_adopters_topic_23.png" width="800" height="600" />
+</br>
+Topics with low Precision@k (on 5-fold cross-validation on individual topics)</br>
+<img src="plots/candidate_set/embed_adopters_topic_31.png" width="800" height="600" />
+<img src="plots/candidate_set/embed_adopters_topic_3.png" width="800" height="600" />
+<img src="plots/candidate_set/embed_adopters_topic_34.png" width="800" height="600" />
+<img src="plots/candidate_set/embed_adopters_topic_32.png" width="800" height="600" />
+</br>
+<a href="cand_vis.html">Other plots</a>
+
+<h3> Histogram of Precision@k and MAP@k values at k=500, n=10 </h3>
+Random Forests classifier trained on examples from 500 topics combined and testing done on separate 100 topics</br>
+<img src="plots/prec_500_rf.png" width="600" height="400" />
+<img src="plots/map_500_rf.png" width="600" height="400" />
+
+<h4> 06 May </h4>
+
 <h3> Change in Precision and MAP values with k </h3>
 n=10 and k is varied from 25 to 1000</br>
 <img src="plots/prec_k.png" width="600" height="400" />

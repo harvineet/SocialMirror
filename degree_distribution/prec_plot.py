@@ -56,20 +56,28 @@ with open("prec_plot_k.pickle","rb") as fr:
 	eval_plot(vec,nbapp,fol,'Precision at k','Precision@k values at different k')
 """
 num_bin = 50
-def eval_plot(eval,rec,xlab):
+def eval_plot(eval,rec,xlab,title):
 	plt.hist(eval, num_bin)
 	# plt.bar(range(1,len(eval)+1), eval)
 	# plt.bar(range(1,len(rec)+1), rec)
 	plt.xlabel(xlab)
 	plt.ylabel('Frequency')
-	plt.title('Histogram of Prec@10 for 100 topics')
+	plt.title(title)
 	plt.grid()
 	plt.show()
 
-with open("mean_precision_n10_rf_prec10.pickle","rb") as fr:
-	prec_k_total = pickle.load(fr)
-	cand_set_recall = pickle.load(fr)
-	cand_set_size_list = pickle.load(fr)
+# with open("mean_precision_n10_rf_prec10.pickle","rb") as fr:
+	# prec_k_total = pickle.load(fr)
+	# cand_set_recall = pickle.load(fr)
+	# cand_set_size_list = pickle.load(fr)
 
-print sum(cand_set_size_list)
-eval_plot(list(prec_k_total),list(cand_set_size_list),'Precision@k')
+with open("eval_n10_lr.pickle","rb") as fr:
+	ap_total = pickle.load(fr)
+	prec_k_total = pickle.load(fr)
+	_ = pickle.load(fr)
+	cand_set_recall = pickle.load(fr)	
+
+# print sum(cand_set_size_list)
+# eval_plot(list(prec_k_total),list(cand_set_size_list),'Precision@k','Histogram of Prec@10 for 100 topics')
+user,_,_ = zip(*prec_k_total)
+eval_plot(list(user),[],'Precision@k','Histogram of Precision@500')
